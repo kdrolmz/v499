@@ -207,8 +207,7 @@ const BF = {
     date: new Date().toISOString().split('T')[0], time: '09:00', flightCode: '',
     transferType: 'arrival', givenBy: OL, assignedTo: '', altAcenta: '', altAcentaUcreti: '',
     pickup: '', dropoff: '', extraStops: [], route: 'free', vehicle: 'vito', plate: '',
-    driverName: '', driverPhone: '',
-    passengerCount: 1, passengers: [{ name: '', phone: '', tc: '', pasaport: '', uyruk: 'TR' }],
+    driverName: '', driverPhone: '',olmezKarPayi: '',passengerCount: 1, passengers: [{ name: '', phone: '', tc: '', pasaport: '', uyruk: 'TR' }],
     childSeat: false, childSeatCount: 0,
     paymentAmount: '', paymentCurrency: 'TRY', paymentCollect: 'yes',
     paymentMethod: 'cash', paymentStatus: 'pending', driverPayment: '',
@@ -384,13 +383,18 @@ function olmezKar(t) {
     const c = parseFloat(t.customerTRY || t.paymentAmount) || 0;
     const d = parseFloat(t.driverPayment) || 0;
     const alt = parseFloat(t.altAcentaUcreti) || 0;
+    const olPay = parseFloat(t.olmezKarPayi) || 0;
+    const yes = t.paymentCollect === 'yes';
 
     const alan = t.assignedTo === OL && t.givenBy && t.givenBy !== OL;
     const veren = t.givenBy === OL && t.assignedTo && t.assignedTo !== OL;
-    const araci = alan && t.altAcenta && t.altAcenta !== OL;
+    const paylasimliAraci = alan && t.altAcenta && t.altAcenta !== OL && alt > 0;
 
-    // Ölmeztur sadece aracıysa kar 0
-    if (araci) return 0;
+    // Trias -> Ölmeztur -> Barentur
+    // Ölmeztur sadece kendi payı kadar kar eder
+    if (paylasimliAraci) {
+        return olPay;
+    }
 
     if (alan) {
         if (t.altAcenta && alt > 0) return d - alt;
@@ -398,11 +402,14 @@ function olmezKar(t) {
     }
 
     if (veren) {
-        if (t.paymentCollect !== 'yes') return 0;
+        if (!yes) return 0;
         if (t.altAcenta && alt > 0) return d - alt;
         return c - d;
     }
 
+    if (!yes) return 0;
+    return c - d;
+}
     if (t.paymentCollect !== 'yes') return 0;
 
     return c - d;
@@ -410,57 +417,62 @@ function olmezKar(t) {
   function calcBal(t) {
     const c = parseFloat(t.customerTRY || t.paymentAmount) || 0;
     const d = parseFloat(t.driverPayment) || 0;
+    const alt = parseFloat(t.altAcentaUcreti) || 0;
+    const olPay = parseFloat(t.olmezKarPayi) || 0;
+    const yes = t.paymentCollect === 'yes';
 
     const veren = t.givenBy === OL && t.assignedTo && t.assignedTo !== OL;
     const alan = t.assignedTo === OL && t.givenBy && t.givenBy !== OL;
-    const araci = alan && t.altAcenta && t.altAcenta !== OL;
+    const paylasimliAraci = alan && t.altAcenta && t.altAcenta !== OL && alt > 0;
 
-    // Aracı senaryosu:
-    // Salah'a borç = müşteri - alt acenta maliyeti
-    if (araci) {
-        return {
-            firm: t.givenBy,
-            netOl: -(c - d)
-        };
+    if (!veren && !alan) return null;
+
+    // Trias -> Ölmeztur -> Barentur
+    // Toplam fark = müşteri - alt acenta maliyeti
+    // Ölmez kendi payını alır, kalanı işi verene borç olur
+    if (paylasimliAraci) {
+        const toplamFark = Math.max(0, c - alt);
+        const verenPayi = Math.max(0, toplamFark - olPay);
+        return { firm: t.givenBy, netOl: -verenPayi };
     }
 
     const firm = veren ? t.assignedTo : t.givenBy;
 
     if (alan) {
-        if (t.paymentCollect === 'yes') {
-            return { firm, netOl: -(c - d) };
+        if (yes) {
+            const v = Math.max(0, c - d);
+            return { firm, netOl: -v };
         }
         return { firm, netOl: d };
     }
 
-    if (veren) {
-        if (t.paymentCollect === 'yes') {
-            return { firm, netOl: c - d };
-        }
-        return { firm, netOl: -d };
-    }
-
-    return null;
+    if (yes) return { firm, netOl: c - d };
+    return { firm, netOl: -d };
 }
   function calcAltBal(t) {
-    if (!t.altAcenta || t.altAcenta === OL) return null;
+    if (!t.altAcenta || !(parseFloat(t.altAcentaUcreti) > 0)) return null;
 
     const c = parseFloat(t.customerTRY || t.paymentAmount) || 0;
     const d = parseFloat(t.driverPayment) || 0;
     const alt = parseFloat(t.altAcentaUcreti) || 0;
+    const olPay = parseFloat(t.olmezKarPayi) || 0;
 
     const alan = t.assignedTo === OL && t.givenBy && t.givenBy !== OL;
-    const araci = alan && t.altAcenta && t.altAcenta !== OL;
+    const paylasimliAraci = alan && t.altAcenta && t.altAcenta !== OL && alt > 0;
 
-    // Aracı senaryosu:
-    // Yaşar'dan alacak = müşteri - Yaşar maliyeti
-    if (araci) {
-        return {
-            firm: t.altAcenta,
-            netOl: c - d
-        };
+    // Trias -> Ölmeztur -> Barentur
+    // Ölmez'in Barentur'dan alacağı = müşteri - alt acenta maliyeti
+    if (paylasimliAraci) {
+        const toplamFark = Math.max(0, c - alt);
+        return { firm: t.altAcenta, netOl: toplamFark };
     }
 
+    if (t.paymentCollect === 'yes') {
+        return { firm: t.altAcenta, netOl: d };
+    }
+
+    return { firm: t.altAcenta, netOl: -alt };
+}
     if (!(alt > 0)) return null;
 
     if (t.paymentCollect === 'yes') {
