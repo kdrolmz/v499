@@ -381,46 +381,68 @@ async function downloadWorkbook(wb, filename) {
     return false;
 }
 function olmezKar(t) {
-    const c = parseFloat(t.customerTRY) || 0, d = parseFloat(t.driverPayment) || 0, alt = parseFloat(t.altAcentaUcreti) || 0;
-    const yes = t.paymentCollect === 'yes';
-    const alan = t.assignedTo === OL && t.givenBy && t.givenBy !== OL;
-    const veren = t.givenBy === OL && t.assignedTo && t.assignedTo !== OL;
+    const c = parseFloat(t.customerTRY) || 0;
+    const d = parseFloat(t.driverPayment) || 0;
+    const alt = parseFloat(t.altAcentaUcreti) || 0;
+
+    const isAraci =
+        t.givenBy && t.givenBy !== "Ölmeztur" &&
+        t.assignedTo && t.assignedTo !== "Ölmeztur";
+
+    // 👉 SEN SADECE ARACIYSAN = 0 KAR
+    if (isAraci) return 0;
+
+    const alan = t.assignedTo === "Ölmeztur" && t.givenBy !== "Ölmeztur";
+    const veren = t.givenBy === "Ölmeztur" && t.assignedTo !== "Ölmeztur";
+
     if (alan) {
-        if (t.altAcenta && alt > 0)
-            return d - alt;
+        if (t.altAcenta && alt > 0) return d - alt;
         return d;
     }
+
     if (veren) {
-        if (!yes)
-            return 0;
-        if (t.altAcenta && alt > 0)
-            return d - alt;
+        if (t.paymentCollect !== 'yes') return 0;
+        if (t.altAcenta && alt > 0) return d - alt;
         return c - d;
     }
-    if (!yes)
-        return 0;
+
+    if (t.paymentCollect !== 'yes') return 0;
+
     return c - d;
 }
-function calcBal(t) {
-    const c = parseFloat(t.customerTRY) || 0, d = parseFloat(t.driverPayment) || 0;
-    const yes = t.paymentCollect === 'yes';
-    const veren = t.givenBy === OL && t.assignedTo && t.assignedTo !== OL;
-    const alan = t.assignedTo === OL && t.givenBy && t.givenBy !== OL;
-    if (!veren && !alan)
-        return null;
+  function calcBal(t) {
+    const c = parseFloat(t.customerTRY) || 0;
+    const d = parseFloat(t.driverPayment) || 0;
+
+    const isAraci =
+        t.givenBy && t.givenBy !== "Ölmeztur" &&
+        t.assignedTo && t.assignedTo !== "Ölmeztur";
+
+    // 👉 SEN SADECE ARACIYSAN → HİÇBİR BORÇ/ALACAK YOK
+    if (isAraci) return null;
+
+    const veren = t.givenBy === "Ölmeztur" && t.assignedTo !== "Ölmeztur";
+    const alan = t.assignedTo === "Ölmeztur" && t.givenBy !== "Ölmeztur";
+
     const firm = veren ? t.assignedTo : t.givenBy;
+
     if (alan) {
-        if (yes) {
-            const v = Math.max(0, c - d);
-            return { firm, netOl: -v };
+        if (t.paymentCollect === 'yes') {
+            return { firm, netOl: -(c - d) };
         }
         return { firm, netOl: d };
     }
-    if (yes)
-        return { firm, netOl: c - d };
-    return { firm, netOl: -d };
+
+    if (veren) {
+        if (t.paymentCollect === 'yes') {
+            return { firm, netOl: c - d };
+        }
+        return { firm, netOl: -d };
+    }
+
+    return null;
 }
-function calcAltBal(t) {
+  function calcAltBal(t) {
     if (!t.altAcenta || !(parseFloat(t.altAcentaUcreti) > 0))
         return null;
     const d = parseFloat(t.driverPayment) || 0, alt = parseFloat(t.altAcentaUcreti);
