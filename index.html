@@ -381,19 +381,16 @@ async function downloadWorkbook(wb, filename) {
     return false;
 }
 function olmezKar(t) {
-    const c = parseFloat(t.customerTRY) || 0;
+    const c = parseFloat(t.customerTRY || t.paymentAmount) || 0;
     const d = parseFloat(t.driverPayment) || 0;
     const alt = parseFloat(t.altAcentaUcreti) || 0;
 
-    const isAraci =
-        t.givenBy && t.givenBy !== "Ölmeztur" &&
-        t.assignedTo && t.assignedTo !== "Ölmeztur";
+    const alan = t.assignedTo === OL && t.givenBy && t.givenBy !== OL;
+    const veren = t.givenBy === OL && t.assignedTo && t.assignedTo !== OL;
+    const araci = alan && t.altAcenta && t.altAcenta !== OL;
 
-    // 👉 SEN SADECE ARACIYSAN = 0 KAR
-    if (isAraci) return 0;
-
-    const alan = t.assignedTo === "Ölmeztur" && t.givenBy !== "Ölmeztur";
-    const veren = t.givenBy === "Ölmeztur" && t.assignedTo !== "Ölmeztur";
+    // Ölmeztur sadece aracıysa kar 0
+    if (araci) return 0;
 
     if (alan) {
         if (t.altAcenta && alt > 0) return d - alt;
@@ -411,18 +408,21 @@ function olmezKar(t) {
     return c - d;
 }
   function calcBal(t) {
-    const c = parseFloat(t.customerTRY) || 0;
+    const c = parseFloat(t.customerTRY || t.paymentAmount) || 0;
     const d = parseFloat(t.driverPayment) || 0;
 
-    const isAraci =
-        t.givenBy && t.givenBy !== "Ölmeztur" &&
-        t.assignedTo && t.assignedTo !== "Ölmeztur";
+    const veren = t.givenBy === OL && t.assignedTo && t.assignedTo !== OL;
+    const alan = t.assignedTo === OL && t.givenBy && t.givenBy !== OL;
+    const araci = alan && t.altAcenta && t.altAcenta !== OL;
 
-    // 👉 SEN SADECE ARACIYSAN → HİÇBİR BORÇ/ALACAK YOK
-    if (isAraci) return null;
-
-    const veren = t.givenBy === "Ölmeztur" && t.assignedTo !== "Ölmeztur";
-    const alan = t.assignedTo === "Ölmeztur" && t.givenBy !== "Ölmeztur";
+    // Aracı senaryosu:
+    // Salah'a borç = müşteri - alt acenta maliyeti
+    if (araci) {
+        return {
+            firm: t.givenBy,
+            netOl: -(c - d)
+        };
+    }
 
     const firm = veren ? t.assignedTo : t.givenBy;
 
@@ -443,28 +443,33 @@ function olmezKar(t) {
     return null;
 }
   function calcAltBal(t) {
-    if (!t.altAcenta || !(parseFloat(t.altAcentaUcreti) > 0))
-        return null;
-    const d = parseFloat(t.driverPayment) || 0, alt = parseFloat(t.altAcentaUcreti);
-    if (t.paymentCollect === 'yes')
+    if (!t.altAcenta || t.altAcenta === OL) return null;
+
+    const c = parseFloat(t.customerTRY || t.paymentAmount) || 0;
+    const d = parseFloat(t.driverPayment) || 0;
+    const alt = parseFloat(t.altAcentaUcreti) || 0;
+
+    const alan = t.assignedTo === OL && t.givenBy && t.givenBy !== OL;
+    const araci = alan && t.altAcenta && t.altAcenta !== OL;
+
+    // Aracı senaryosu:
+    // Yaşar'dan alacak = müşteri - Yaşar maliyeti
+    if (araci) {
+        return {
+            firm: t.altAcenta,
+            netOl: c - d
+        };
+    }
+
+    if (!(alt > 0)) return null;
+
+    if (t.paymentCollect === 'yes') {
         return { firm: t.altAcenta, netOl: d };
+    }
+
     return { firm: t.altAcenta, netOl: -alt };
 }
-function tokenOverlapScore(a, b) {
-    try {
-        const aa = String(a || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean);
-        const bb = String(b || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean);
-        if (!aa.length || !bb.length)
-            return 0;
-        let hit = 0;
-        aa.forEach(x => { if (bb.includes(x)) hit++; });
-        return hit / Math.max(aa.length, bb.length);
-    }
-    catch (e) {
-        return 0;
-    }
-}
-function matchPlate16SeferForTransfer(t, requirePlate) {
+  function matchPlate16SeferForTransfer(t, requirePlate) {
     try {
         if (requirePlate && !isPlate16Transfer(t))
             return null;
