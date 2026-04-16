@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ödeme/Transfer">
 <meta name="theme-color" content="#1B1535">
-<title>Ölmeztur Transfer v49</title>
+<title>Ölmeztur Transfer — Premium</title>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -17,20 +17,36 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:#F5F4FA;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif}
+html,body{height:100%;overflow:hidden;background:#F8FAFC;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#0F172A;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 #root{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
 input,select,textarea{font-size:16px!important;-webkit-appearance:none;font-family:inherit;outline:none}
-button{-webkit-appearance:none;font-family:inherit;cursor:pointer;transition:all .2s ease}
-button:active{opacity:.75;transform:scale(.98)}
+button{-webkit-appearance:none;font-family:inherit;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
+button:active{opacity:.85;transform:scale(.985)}
 ::-webkit-scrollbar{display:none}
 @supports(padding-top:env(safe-area-inset-top)){.st{padding-top:env(safe-area-inset-top)}.sb{padding-bottom:calc(env(safe-area-inset-bottom)+4px)}}
-.card{background:#fff;border-radius:18px;border:1px solid #E0DEEC;box-shadow:0 3px 16px rgba(27,21,53,.06),0 1px 3px rgba(27,21,53,.04);padding:15px}
-.inp{background:#F5F4FA;border:1.5px solid #E0DEEC;border-radius:10px;padding:9px 12px;color:#1A1A2E;width:100%;display:block;transition:border-color .15s}
-.inp:focus{border-color:#1B1535;background:#FFFFFF;box-shadow:0 0 0 3px rgba(27,21,53,.08)}
-.lbl{font-size:10px;font-weight:700;color:#7A7A8E;letter-spacing:.6px;text-transform:uppercase;display:block;margin-bottom:4px}
-.mo{position:fixed;inset:0;background:rgba(10,8,32,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.ms{width:100%;max-width:520px;background:#FFFFFF;border-radius:24px 24px 0 0;padding:20px;max-height:90vh;overflow-y:auto;box-shadow:0 -4px 30px rgba(27,21,53,.12)}
-.toast{position:fixed;top:76px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#0A0820,#1B1535);color:#D4A96A;padding:10px 24px;border-radius:40px;font-size:13px;font-weight:700;z-index:999;pointer-events:none;white-space:nowrap;border:1px solid rgba(212,169,106,.3);box-shadow:0 6px 24px rgba(10,8,32,.3)}
+.card{background:#FFFFFF;border-radius:16px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(15,23,42,.04),0 1px 2px rgba(15,23,42,.03);padding:16px}
+.inp{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:10px 12px;color:#0F172A;width:100%;display:block;transition:border-color .15s,box-shadow .15s,background .15s;font-weight:500}
+.inp:focus{border-color:#0F2744;background:#FFFFFF;box-shadow:0 0 0 3px rgba(15,39,68,.08)}
+.lbl{font-size:10px;font-weight:700;color:#64748B;letter-spacing:.7px;text-transform:uppercase;display:block;margin-bottom:5px}
+.mo{position:fixed;inset:0;background:rgba(8,26,46,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.ms{width:100%;max-width:560px;background:#FFFFFF;border-radius:24px 24px 0 0;padding:22px;max-height:90vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(8,26,46,.15)}
+.toast{position:fixed;top:78px;left:50%;transform:translateX(-50%);background:#0F172A;color:#FFFFFF;padding:10px 22px;border-radius:40px;font-size:13px;font-weight:600;z-index:999;pointer-events:none;white-space:nowrap;box-shadow:0 8px 24px rgba(15,23,42,.25);letter-spacing:.1px}
+/* Desktop layout */
+@media (min-width: 900px){
+  html,body{background:#F1F5F9}
+  main.main-cont{max-width:1200px!important;padding:18px 24px 140px!important}
+  .desk-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+  .desk-wide{grid-column:1/-1}
+  .card{padding:18px}
+}
+@media (min-width: 1200px){
+  main.main-cont{max-width:1320px!important}
+  .desk-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+}
+.tr-row{transition:box-shadow .18s ease,border-color .18s ease}
+.tr-row:hover{box-shadow:0 4px 18px rgba(15,23,42,.08)}
+.amt-pos{color:#16794F;font-variant-numeric:tabular-nums}
+.amt-neg{color:#B02828;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -46,17 +62,8 @@ window.OLMEZTUR_FIREBASE_CONFIG = {
 };
 window.OLMEZTUR_CLOUD_DOC_ID = "main";
 window.OLMEZTUR_ALLOWED_UID = "";
-var LOGO_URI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAA/k0lEQVR42u3deXxb5Zno8UeyZHlfE8uOkziOYyexQ/bEhBAStiRAgRJqKLcthXYwc5kyZdqZzEBve+eW22bqmd4uMAUCha4UajBLGiCBbGR1QvbESZzFe2x53zdt949IQTGyLcmWdCT9vp+PPonkc6Rz3vPofZ/3Pe85Un334fuzBAAAhBSNiFgpBgAAQouaIgAAgAQAAACQAAAAABIAAAAQFJgECAAAIwAAAIAEAAAAkAAAAAASAAAAEKCYBAgAACMAAACABAAAAJAAAAAAEgAAABCgmAQIAAAjAAAAgAQAAACQAAAAABIAAAAQoJgECAAAIwAAAIAEAAAAkAAAAAASAAAAEKCYBAgAACMAAAAgVEYAoDAF+XoVpQAg2BSXGhhxJgHASA09XxIA1HkgAQjiwCfoATACQP3ozwSAQvZeo692CGYLJQIAriUG1J+MANDoA0BoJgUW6lUSABp9ACAZoL4lAVBew08QAoD/kgHqYBIAevsAEILJAPUyCQC9fQBgVIC62o0EgKsARm74w2zBZKY0AEDxyYCZupsRABp+ACARoC4nAXCv8SdYACC4EgHqdRIAev0AEIKJAHU8CQANPwCE+GgAdT6TAKUgX68pLjWY+GoAQMgkAibqfxE1jT+NPwCEaiJQkK8P2ZHwkNxx+wGn8QcAkoBQbRNCLgGg1w8AGJoEhGL7EFKnAGj8AQCujAaEyghA0E8CLMjXa20H10iIAwBGSAKModJmBH2mU5Cv19LwAwDcSQJCof0I6lMANP4AgPEYDSABoPEHAJAEkADQ+AMASAICU9j183JjgqzxDy8uNQwSsgCA8VJW12MuyNeHl9X1BM3tg4NqBIDGHwDgxZGAwYJ8fTgJAI0/AIAkgASAxh8AQBJAAkDjDwAgCVCwsOvn5UYHcOOvKy41DBCKAABfs00M1JXV9QTkLebVHEIAAEJPwCYA9P4BAP5WXGoYKMjX60gAaPwBACQBJAA0/gAAkgBlCtSfA7YSbgAA2qcQGQEoyNdHFJca+okvAIACRwH6C/L1ESQANP4AAJIAEgAafwAASQAJAAAA8KOw6+flRim89x9ZXGro41ABAAJFWV2PqSBfH1lW12NkBAAAAJAA0PsHAASz4lJDX0G+PpIEgMYfAEASQAIAAABIAOj9AwAYBfAhJd8KmNv9AgCCiaLaNcWNABTk66OKSw29xAkAIIhGAXoL8vWKuuyeOQAAAIQgRSUA9P4BAIwCMAIAAAC8RImTAJn8BwAIZopo5xQzAlCQr48uLjX0EBcAgGBVXGroKcjXRytlBABjT15mOBzcC5QIAFDfKp1aIQc0YHv/jsHo7DkAgPpWiaMATAIEACAEKWkSYDBN/mMiIwBQ3yp62/0+AlCQr48pLjV0B+rRKy41nB/pOQCA+tbJvnQX5Otj/D0CgHEOSgAA9a3SMQcAAAASAN8K9OF/AAA85e/TAEqYBMiEOQBAKPNLO8gpAAAAQpDfEoCCfH1scamhi0MAAAhVxaWGroJ8fSwjAAAAgAQAAAB4h78nATIBEAAAP7SHjAAAABCC/JIAFOTr44pLDZ0UPwAg1BWXGjoL8vVxjAAAAAASAAAAMP78OQmQCYAAAPipXWQEAACAEEQCAAAACYD3FeTr44tLDR0UPQAAVxSXGjoK8vXxjAAAAACv8tckQCYAAgDgx/aREQAAAEIQCQAAACQAAACABAAAAJAAAACA4MBVAAAAKAdXAQAAABIAAABAAgAAAEgAAACAW5gECACAcjAJEAAAkAAAAAASAAAAQAIAAADcwiRAAACUg0mAAACABAAAAJAAAAAAEgAAAOAWJgECAKAcTAIEAAAkAAAAgAQAAACQAAAAALcwCRAAAOVgEiAAACABAAAAJAAAAIAEAAAAuIVJgAAAKAeTAAEAAAkAAAAYRxqKAEpTkK/P9nTd4lLDeUoQxCdAAoDArEw7xvP9qHRBfALOEwAmAcKXFWqOC5Vpxzh/ZvaQCrecIwHiEwrls/aREQD4tGItLjWUF+Tr9aNUpu1j+KiEkf5YXGowOG4LRwbEJ0KV6rsP36/z8RdNX1xqMFD0Ideb6hjm/+0+2BTHSjfe2f+pbIlP4hMKiEmfto+MAMCbFas/K9XhemwJo/UAOYLEJ/GJUEACAK9VrLbhzAhPKtXiUkOEB5/f70llW1xq6C/I11PREp/EJ0IKpwDgjR6VW70pTyrTca50HXtd8Y7/UtESn8QngrV95CoAjDVgZxaXGs4V5OtTi0sNDQX5+sjiUkNfQb5+YIQK1WdJ59DPGma72u3LFuTrxbb9YtufmcWlhnMcaeKT+ESwtY+q7z58f7iPv5CpxaWGBo5x4Fesw/Sq2pVQsbqw/QMu9LiG9raoaIlP4hNB0z4yBwBj6lWNVrEqqVIdbrucVLbtQypaelvEJ/GJoMNvAcCTnlWHvXItLjX0Oatci0sNOqVWrm5sa7tt/67ur0PPEsQn8YmAxikAuFOxiq1SbSjI10cOV7EGwb46G35NsJ17TRWGXIlP4hNB0D6q5cqEA18+xA+fyWMMD9vQ4lm5MpzaMULlGh4M+2vbjy/0tmz73WFrZM7aGh1ihPgkPnkEZPvIKQCMlpHOslUmabaKpXdo5VpcaggfplIKWMPsU7tt/zsK8vVptnKZRZQQn8QnApHquw/fr/XxFzatuNRQT9EHRuUq186iHq5XFezlMOhsyFUcZmHbeqAgPolPBEz7yAgARqxcbcEYspXrCPvZ7lg+9LSIT+ITgYYEACNWrgX5+igJgSFVVypZZ0OuBfn6KCpZ4pP4RKAmAEwC5OE4oWpWcanhjK2idVa5akO5fGz7/4VK1lY2Z2yVLLFEfBKfPJgEiIDqWc22VRKTnA2rOqlcQpKzStbWw5pkK7/ZlBLxSXwiEEYAAMdKlsp1jJUspUN8Ep8gAUBA9a7k82uIe6hc3a9kbeVmvxadXhbxSXyCBACBUbkWlxou254bqVzdr2Tt5WYrRypZ4pP4hOITACYBhvakqtnFpYYyWwURLV+8nIpyci2m7dpt5SjFpYYyWyVLGRGfxCcPJgFCkT2sdHF+XpVfi3StlzW0nNptPax0Sof4JD6h5BEAhG7Fmiufn1ftpnIdv0rWVp728625lBDxSXyCBACKqVztQ6u25yYq1/GrZIeUZxmVLPFJfIIEAEqqZJ0OrWLctAtDrcQn8QkFJwBMAgy9iVW5cmVYtdZJLyGMMhrTndjCnJRprXw+1BpU+/vTX/zqHPFJfPJgEiACr4cV69i7clY5wKOhVsdybLeVc9D66S9+VU58Ep8IzBEAhFajnyefT6zqokR8UuF2yecTrvKCNQkYj0SA+CQ+QQIA3yQDZnpX3u9lOZZzsBvP0QDik/gECQDGuffv7NwqfFLp1oZCL8vT0QDik/iE7xMAJgGG2B3BnJxbVVM2Xplw5ZhgDz3XGox3mXM2GkB8Ep88FNo+cj0toOze9Plg2P5n/um72RxNQHkjAAgBBfn6OWKb6CNcV+0v7fL5ZKs5JDLEJ/EJEgD4zZBhQFC+XuHpCADlR3zCezgFECK9/+JSw6mCfP0URWWfarU2MTE+y5N1LWaLsa2942IAV7yn7MfFGw2nUnr2rmy/UuMzxBMDl+ITgZ8AWP3wuVaK3udJwBQZMrxaXGpQ+XOb/vWf/2GSiJR5uHrVhqLnpgVIZaoqyNfbY75dRBIcGrug/S4880/fnRHI8elPT69/0rqh6DkV8RmSfFbmjAAA8FvDD+eNv6+TAITuCADgL5dFZInD83tF5H+NsPw9IlJv+/8AxUfjH6yN/9DnJAIgAYDbCvL114lCZ1dvKHpuUEQ+c6js5o+yyskNRc9VBsFhaReRBPvxKS41nAzVhl/J8amg74mK+IQ3MAM0RAXy+dWn1z+Z+vT6J59+ev2Taso7OHv9oXj+f2jv35eNfyjPtwjpEYAjx477dJJHQf7qDF9/ZmiPAKye6+x1JR6DF1/+vfz9Y98c9u/P/vT/VSy7frEYjSbRajXy81+98NMjx44H0rGQQDkWrlp78yqRMUxaCqT49GoD/PorXyyb//F3Yypb4jMg62ufto+cAkDA+OEz37vm+c03LZcDpYcpGARd4w+QAABOXK5vkPc2bZFP9+ynMBCUjb+t9w94FXMAgtiGx1fPlSCaYHX+wiX5z1/8Rp765x/K9p27xWQyBfLutNuPje04EZ80/kpq/EM+PkkAEJSefmmr4rYpLCxMpkyeNOIyv3huoxw8dESsVivlTnwGJX82/sRn6OEUAPxKp9PJrTevkLvvXC0TJiS5tM7UKZPljjW3yGt/eEMGBwcpRARF759hf5AAIGQa/nu+tEbuWHOLxMbEuLROzozp8q1vPiSLFswVlUol1TV18uGWbRQmaPwBD3AKAH5hsZhl9a0rrzb+Pb29cvbciL8rI089WSiLF84TlerKJcvz5uZRkAj4xh9gBAAhxWg0yQdbtsna22+WzR99Ih9/sktuWLZEZs0c/cfvys6Wy3vvfyhHjnGDMgR+40/vHyQACDmbP/xENm3e6vJs/sNHT0jJO3+T8guXrnn9jjW3yrSMyU7XaWvrkDeK36WwQeMPkABAKRwn8EVGRsrMnJHvKPvb370uTU3NX3h9/tw8WbjA+ZVKFy9VkgBAkWj8QQKAkBYfHydfuuN2WX3bKomKivToPSqrakSr1YqIiFarueY0Qm9vH4UMl3vp3miUmfQHEgDAQUSETr7xPwrk5pXLrzbenvrLX9+5+v8ZWZmy4dkfXH3e1d1NYcPlRnq8kwAafygZVwHALwYGBiUvd9bVxt/Q2CSfHRn7D/tMStNf87y6po7ChluN9HjN1GfGP0gAACesVqu8/7ctUlFZLb98bqP84/d+IJ8dPjbm983JzrrmeUVFFYWNETnrkY+18WbSH0gAgBHs2LVH1j/zY9m7/6BYLJZxec/FC+dd/b/ZbJHzFyooaPg0CaDxBwkA4MIowHhauniBJCd/fjvho8dPMgcAfh0JoPEHCQAUZcPjq4Nun7RajTz04H3XJBdvlWyi3IlPnyYBgTzpj/gkAUAQefqlrSdEJN72SAjmfX2i8FGZnP75rwm+/7ctcvFSpZI3OcF+bGzHifhU8EhAsDf+xCcJABBwoqOjZP33vyM3Ls+/+lrpoSPy+pslFA7GLQkYbRSAGf8gAQB8JFWfIg/cf48894ufypJF86++vvWTnfKLX784bpMKQRIwWiPPpD8EKm4EBL/R6XSSv2TB1ec52dNHXP6JwkdEo9WIPmWiJCbEX/O31tY2+e3v/yIHDx0JqTL8aMfOi2tvXpVFNPnG0BsF0fiDBAABZ8Pjq+Xpl7b6dRvi4mLlySdcryjn5M36wmuXKqpk+849sn3nbjEaTYoub280/sSn90cBnN0oaKQGPhAbfyYAkgAgCD390tYTGx5fbf+lnAQRaQ+0fRgYGJSenh7p7umV9o4OqaiolgsXK+T8hUvS0toWiIclQcYwwSqYGv5AiM/hkoAg7vmPKT5BAgCMqqmpmaFSev0BwVkSEKSNP0IIkwCBAGn4afz9nwQAJAAIOE+/tLVKhlxvzXk/3xhSzglyZWjV5R8pCIWGP1Dic7gkIJCTg7HGJwIXpwBCo/F3PM8KZVS6c0c7v+pqw6/0BGG0qxQCLT7tpwMc/w3F+AQjAAiu3ikUUr4M9ys7Pu2NfqA3/nz/SQAQIqMAEiK3BVawBHFxdnWoXdtPfAZWfCI4cAoAUCh7EjDaaAA3AgLACABc7W21C5MBvW7o5CpbuXucCBCfUGJ8ggQAgVGxnhCR+A2Pr86gNPxS4WaIh8Ora29elRXsiQDxGbjxCRIABF6FK/SyvN+7Gs9b2obSaADxGXjxCRIABEAvy9bTSqBEfFLZJsg4Tq4K5tEA4jPw4xMkAAiMyrZdONfq1d6VePHcagicEiA+Azg+QQIABfeynJ1rpZId18rV/prXzq0GYxJAfAZPfIIEAMqtaL9w+1WMqwThtqrEJ/EJEgAorZflePtVJlyNb+9qSHlyW1Xik/gECQCUVcnKMBOuqGQ9r1xtzxOEiVXEJ/EJEgAovKJ1OtRKJetZ5SoMrRKfxCdIABAIvSz7UOvQWdfwyNVZ1QytEp/EJ0gAoPhKVhxmXXO+1bPelb3cmFVNfBKfIAFAwFWywvlWjypX2/ME4bwq8Ul8ggQAAVrRcr7Vg8pVOK9KfBKfIAFAIPeybOcFqWQ9rFw5r0p8Ep8gAUBAV7K2/7dTyY5euTKpivgkPkECgKCpZMU26Wq4SjbUKtph9jnh6Ze2tjOpivgkPkECgKCsZGWY27GGSiU7zH4mOJYPlSvxSXyCBABBV8k6nnMd+tvhwV7JDt0/2/4nOJYLlSvxSXwiEKlWzJ1h9XHAZjATNeAqmbm2c68ZItJhe7ndSYUcCr0qESZUEZ/EJ4KgfWQEAC71tGwTr+zXELdLEA+5Dle52vbbfi06lSvxSXyCEQBGAEKrt+XQy+qwTTKSYOhtDbcfDjdQsfeuqFiJT+ITjAAg9Hpb4nB+0Vb5OO1tBUqPa4RtTbBXrpxPJT6JTzACwAgAPu9piWNvy/Zv+wiVs6J7U44Vq7035fgvlSvxSXyCEQDQ03pp64mhvS37udfhKlIl9LpG2gb7DGr7uVTHXhWVK/FJfIIRAEYA4Hpva8Qely96Xi5W6AkO/6dXRXwSnwiJEQANRY7x6G0NqWjtr1c5/HJbuzuVoCeVrge9twTbZ9nvlkbFSnwSn2AEgBEAjGOPy+1elxc5601RsRKfxCcYAQC81eMappLzRWU7YqVKxUp8Ep8IRSQA8HpF61jZOtyxzVnlNx6VrrP3c6xIqxy3haNEfBKfIAEAfNfrivegknRV/EivcYc0EJ8ACQD83Oty7HmNo/jRPhMgPgESACiswh1rpUtlCuITIAFAEFW6APEJjC/uBAgAAAkAAAAgAQAAACQAAACABAAAAJAAAAAAEgAAAEACAAAASAAAAAAJAAAAIAEAAAAkAAAAgAQAAACQAAAAABIAAABAAgAAAEgAAAAACQAAACQAAACABAAAAJAAAAAAEgAAAEACAAAASAAAAAAJAAAAIAEAAAAkAAAAgAQAAACQAAAAABIAAABAAgAAAEgAAAAACQAAACABAAAAV2goAoSq5PgouW1RlmRPSRadViONbd2y71SNHD5XN+q6GakJcsvC6ZKhTxCVWiV1TZ2y61iFnKtupmABkAAASpWRmiCP3rFQdOGffwUmTYiTr6zKkykp8fLu7rJh112YM0nuX5UnapXq6muZaYmSmZYoW0rPy85jFRQwAMXjFABCjk6rka+vnn9N4+8oP3eyLMyZ5PRvKYnRsm7ltY2/ozX52ZKVnkQhAyABAJRmfnaaxESGj7jMjXMznL6+LG+qhKlVI667Yt40ChkACQCgNJMnxo26TGpyrNOGPt2FdSdPjKeQAZAAAKFGRREAIAEAlKeuuXPUZRrbusVssX7h9csurOvK+wMACQDgY0fP10tP/+CIy+w7We309f2nasTiJDFwtPt4JYUMgAQAUJqBQZP8eetxGTCahk0QDp2pdfo3Q1u3vLO7TKxW50nAx4cuyPnaFgoZgOJxHwCEpIr6Nnn+7QNy6+IsyZk8QXThYdLU1iMHymrlYFmNjNTH/+xsnTR39MotC6fLVH28qFW2GwEdr5SzVU0ULgASAEDJmjt65c1tJz1at7K+TV7dfJhCBBCwOAUAAAAjAEDoSYyNlPSJcZI+IU6S4iIlPiZC4qN0Eq7ViFajFk2YWswWqxhNZhk0maWrd0A6uvulratfLrd0SV1TpzS19ww7LwAASAAABVCJSFZ6suRmpsjsqRMkITZy9C9KmEo0YWqJ1GklPjriCzf76e03SnlNs5ypapKyykYxmS1j3s5pqQny+L1LA7qsu/sG5Sd/2HnNa//4lWWSlhzr820xW6xiNlukf9AkfQNG6ejpl9auPjG0dktdU6fUNXeOeoUHQAIABCBduEbycydL/uwpkhQXOa7vHRWhlfnZaTI/O016B4xy+Fyd7D1ZLR3d/RS8QoSpVRKmDpNwbZjERetEnxRzzd8HBk1yrqZZjpbXy7nqJiEVAAkAEAQVf37uFLllUZZER2i9/nlROq2smDtNluVNlf2nqmXH0QrpGzByIAIgQZyblSpzs1Klqb1HPio9L2WVjRQMSACAQKRPjJEHb73O5SFnq4iU1zTL6YpGqW3skLauPhk0mUWrCZO4KJ1MmhArszImypxMvWjCRp5DqwlTy4p502R+dpq8tfO0lNc0c0ACxMSEaPnGmvly4mKDvL3rtAwazRQKSACAQLF4Vrrce+PsURtqu4r6Nnlv9xkxtHV/4W8DgyZpGjRJU3uPHL/QIB9ElcuapTNk0cz0Ud83Nkonj965UPacqJIPDpSPabLgH7ccc7tXGh8dIf/29ZvcWqeivk02vn/I7e2758bZsixvyojL/Pqt/U5fXzU/U9bkZ4+5PLSaMNFpwyQiXCMTE6IlJTFGcqYky7S0xGF/xnk4c7NSJSEmQl7dfGTYG0cBJACAgty+ZIbcsnC6y8vvPlEpHx4473Lj3NU7IG/tPC0X61rl/lVzRv2JYJErPzGcGBspb24/IUaThYPkJUaTWYwms3T3DUpzR6+cqWqSXccqJDZKJ7cuypIls9PdSgSm6hOk4OY8+dPW4xQuggr3AUDQuSM/x63Gf9+pavlgv2c986Pn6+WtnadcXj4vM0W+tnq+SwkDxldX74C8u7tM/rTlmJgt7iVgeZl6ycvUU4ggAQCUasXcaXLT/GkuL1/T2CGb950b02ceO18vB8pqXF5+5pQJ8pVVczhYfnKmqsmjY37roukUHkgAACXKTEuUO653/Ryy1WqVkk/LxDION/D56MB56e4bdHn5+dlpcsOcqRw0Pyktq5Wm9h631klLjv3CpYNAINO0dHT7eixyqh8+E0Fu4/p1iSJyUkTSXV1HpVK9cfpS/UPjtQ0xkeHfE5Gfu7r83ctnDdy9fNbSwqKSE87+vuHx1TeKyG7H176xZv59hUUl77qzXRseXz1ZRGrcWSczLXFXS0f3KnfLYFnelOdF5B8cysTQ0tGd6sq6a/Kz/01ENrjzeZ6Uh93EhOifiMgz7qzzVMEN3y0sKvk13zgEQ/vICACCxbPuNP42vxznbXhFRHrdWF4nIs9z6PzmUw/WyaXYECxIABAMvf/ZIvK4m6udKSwqKR3P7SgsKukUkXfcXG3FxvXrCjiKftHgwTqpFBtIAADleEbcv6T1PS9ty/serPODYV7fKyKRQx7vK/xYPDVkezMUvK1dHqwTztcNwUIjV34bxdeYA4BxERcdkWoyWx5w9WY/dv/1l0+3eCMOn/r1pk9+8Y93W1Xuvfe8mVMn3nyuumnnkBEFEZGBsX5//vWFD1U/+593uLUftrsWul0+hUUlZhExe7K9JZ+eVq27Kc+tz/vNOwdUnh7Hn/5xx4RnvnGzW+scOF3dTP2FYGkfGQFAQFs2Z+rDmjC1W70yi8VqqmxoO+SN7entN7Y1tHSddXe9G+dO+zZH07eSYqPcvgyjtbO3mpJDsCABQEBbmDPpPnfXudzSWTZoNPd6a5uqGto+c3ed67JS7wpTq7UcUd/JzUy53d11Tlc0bqXkQAIA+FlcdETqtLSkpe6uV9/cVebN7Wpo6XL7LjNROm1CzpQJKzmqvhGp08YvzElf5846LR29lRfrWvZReggWzAFAwJqRnrxc5UEsNbR2lXszBg1t3eUe7c/k5OVnqhq3Kej7FijfU7e388sr8n4SExk+wZ11inec+GeL1Wqh/kKwtI+MACBgZaYlLvVkvbauvlpvbldbV1+dJ+tN83B/4J67ls36wc0Lpz/hzjo7jlz6zZHyy+9Qegi2EQAgIE1OiZ/nyXrt3Z410C6/v4cJwJSU+LkcVe/GywM3X/dfszJSbnFnvW2HL/z6r9tOfI8SBAkAoBDJ8VEeXWPe0zfY6s3t6hkwtnmyXnx0RFqYWq01WyxGjq7nwrVhUTqtJiYmMjx50oS43Mkp8fPmz5h0T/rEuOvceZ/Gtu4Lr398/DtllYaPKVUEawLAHAAEZgIQF+XRr+n0DZg6vRmDA4OmHovValarVGFufSlUKnVibOSU5o6eCgV831R++J66/XlP3Hd9yXhugNFk7i+vad6161jFxuMX6jdZOeePIG4fGQFAQNKFa2K0mrBIT9btHzR1e3v7BgZN3ZE6bby768VG6SZ6IQHAMLr7BpvLKg2fXG7uKqtqaPusvKZ5t9Fk7qNkECojAEDACdeERXm6ri+G2M0Wq0efEa71fL/gvpjI8AmLZqbfP1XfsyAzLXHp5JT4eWcqGz+uMbQft4pYKSGQAADKSwAiPV3XYrGavL19FovF5Ov9gmfC1GptalLszNSk2JnzZqR9SVbKhq7egab9p6r/sP3Ixf/m7n8I5gSAOQAIRB7HkPVKx86rMWi1eth7VInaC9sWtPcB+M07B75y7Pzla37YSROmDo/UaeMjddq45LioaVNTExZkpiUuuW566p1aTViEK+8bG6WbuHpp9vdvWzLjqYNlNW8U7zj5L129A0187RBM7SMjAAhIg2M4T+uLW+6GhXn2Gd68RXGoMJktg129A01dvQNNjW3dF+03V4rSaROWzcn4xt3LZ/8wKkKb6Mp7qVWqsOvzpn4tL1O/+s9bj/4D9wJAMOFGQAjUBMDjhtInCYBaRQKgML0DxvZthy88979f/Xieu3dcjI3STXz8y9e/eePcad+iJEECAPjRwKCp22gy93uybkS4Jtrb26cL18R4sl53H8PM3tbR3V///Nv777tQ27LXnfVUIqpvrF344pLZkx+kFEECAPiRp7f0jdRp4r25XTqtJtrdewCIiFhFrJ7eRhjuMZrMfS+8e6Cgf9DU5W4S8LXbFzwXG6WbSCkiGBIAlY8f4ofP5BGEj+aO3kpPgj76yo/AeG27oiO0SR72TBtMZovRS985T6j8VD/4ZDu7egeaPz50/pfuflhUhDbxyyvynuU7yCPQ20dGABCw6po6TnqyXkJMZJo3tyshNjLdk/VqGzuOc1R9a8+Jylc9WW9p7uSvunpFAaDkEQAgIFXUtx3yZL3E2MjJXk0AYiInebY/rYc4qr7V1tVXZ/t5aLfotJrovMyU2ylBkAAAfnChtmWfJ+vpk2JyvLldqUkxM325PxibakP7UU/Wm5aauJjSQyDjRkAIWO3dffVVDe1HMlITFrqz3qTkuNnejMHU5Fi3E4C+AWNHeU3zbi9tlyqIv6dj/tEiT38dMi46IpW6DIHcPjICgIB2dMhd4FxKACbE5Wq9eMvdjNTERe6uc+Jiwwf8DLB/9PR7lgDERulSKD0EMhIABLT9p6r+6O69/dVqlWZamneGb6N02gRPRgA8nYyGsYsI18Z6sp7JbBmg9EACAPhJW1df3ZHyunfdXW9Opn61N7YnN1N/m8rNIbzaxo4T56qbPuVo+kdMZHiyJ+v19hvbKD0EegLAfQB4BPTjwwPn/tNqtVrcCfz52Wl3e2Nb5s1I+5K7X8LN+8/+TJR3fb0/r4P26Xbqk2I9mhRqaOu6wPePh3AfAMB/aho7ju87VfVHd9ZJS46bnZmWtGQ8tyMiXBu3IHvSve6sc6G2Zd/hc3VvcxT9IypCm+juJFI7Ty9DBZQ0AgAEvHc+Pf3Drt6BZnfWuW3xjCfHcxtWzJv2aLg2LMrV5U1my8Drnxx7iqPnP4tnTb7fk9s29/Yb2y7WtRygBEECAPhZZ89A42sffPZtq4jV9co//SvpE+PmjE/vXxO7ZmnO991Z562dJ5+pbew4wdHzD60mLPJLN8x6xpN1956s/L27k08BJSYAzAHgERSPU5cMWzfvO7PB1eBXqVTqh9cufEGtUmnG+tnrVs75v3HRrl8WdrCs5s3thy/+RoLwHvsSAL9ZoBJRP7x24Que3LWxf9DYueXg+V/yneMhzAEAlOP9PWee3XWs4mVXl89MS1rywC1zfzaWz1yaO+XBVQumP+7q8qcuGba89sHhxzha/qHTaqIfvmPRi/m5U77qyfp/3X7y3zp7+g2UJAKdhiJAsHn942NPmS0W4y0Ls55wZflbFmX9g8lsMb698+Qz7pxCEBHJz53y1UfuXLTR1eWPnr/8/iubDj3CTX98T6sJi1iQPeme+1bmPZscFzXVk/fYdvjC83tOVL5GaYIEAFAgq9VqeeOT499vbu+p+Mqq6zao1apR43z10uynpqUlLvrz1mPfrW/pPDPa8nHRupT7bsr78fLrpn3T1e36+ND5X72189Qz7l6yCPeEqdXaCJ0mNiJcE5sUFzVlSkr8vGmpiQvnzUi7K1Knjfc0pjbvP/sf7+858ywljGChys1I9elPWm5cvy6lsKikkaKHL0xLS1z0rbsWv5rq4rXeVqvVcqrCsPVo+eX3KuvbDjd39FYNGk09Wm1YZEJMRNrUlIR512Wl3rloZvp9rv4cbEd3f8PvPjz8+OkKw1Zv7usT9y37q+3+Bl718qaDDx86U1vs6fo/euTW0skp8XMDJYYaWrvKX//42HfPVjXt5BuFYGof+TEgBLXK+rYjz/5u+/W3LZ7x5Nr8nO9H6rRxIwamSqW+bnrq2uump64d62cbTeb+HUcuvfjB/rM/6x0wdvgg7lU+/P6qgv37X9PYcWL74Ysv7D9d9WfbjH/qLQRV+8gpAAQ9o8nc/+GBc//56bGKV1YtnP73K+ZlPpoUGznZW5/X0zfYuu9U1R+3fXbhv1u7+mo5AoHBZLYMVhvaj5ZVGrYdKb/8Xm1jx0lKBcGMBAAho6d/sG3zvrMbPtx/rigvU3/bvOy0u+dmpa715FIwZ+996pJhy/EL9ZuPX6jfbDSZ+ylxZbBYrWaz2WI0WyyD/YOm7r4BY0d372BLW3ff5dbOvhpDa/eFy82dZbVNHaeMJnMfJQYSACCIG4STlxq2nLzUsEVEJCUxJitDn7Bgij5h3sSE6MzE2MjJCbGRkyK0mhitRq3ThKl1ZovVOGgy9w8azb0d3f0NbV29tc0dvVU1jR0nqhraDte3dJ3z9+S+37yz/4FAKP8f/25bPlEIKCMBYA4AQlpjW/elxrbuS4fO1r5NXAPwM5/VI9wICACAEEQCAAAACQAAAAgFzAEAAEA5mAMAAABIAAAAAAkAAAAYC+YAAACgHMwBAAAAJAAAAIAEAAAAkAAAAAC3MAkQAADlYBIgAAAgAQAAACQAAABgLJgDgGFtXL/uekoBCHyFRSUHKIWA4bP2UUNZg0oDAEIPpwAAACABAAAAoYA5AAAAKAf3AQAAACQAAACABAAAAIwFcwAAAFAO5gAAAAASAAAAQAIAAABIAAAAgFuYBAgAgHIwCRAAAJAAAAAAEgAAADAWzAGAW3ThmsjnnrrnQxGR93aX/Xbz/rN//MHDt2zMSE3IOVvVeOT/vbnne5QSACi/fWQEAACAEEQCAABACNJQBHDHwKCpr7CoZJXjaz/5w/ZCSgYAAi8BYA4AAADK4LP2kREAuCUvU79k8az0m7MmJefFx0Qkh2vDdL39xu7mjp768urm47tPVG5ubOuuHW79F//lvm1qlerqqSeriNVstpgHTeb+nr7BrpaOnvqqhvby0rKaj2ubOi65+j4jefZ32x6raey4MNK67+0pe23zvrN/cLb+w2sX/vONc6fd5fhaU3vP5R9s3PK18domd9xz4+xHv3TD7IdbOnobnn7po4eGW67oiTuKE2IiJ7j7/u3dfc3rf/NhwUj7ZLVarf2Dpt6Wjt6G87XNJ3YerXivvqWzarT3TkmMSf+/j63+09DX//3VTx693NxZ6erxbunsNfzw5a3fMJktRsfl1q2cU7g2P+dqmfzhoyP/tedE5eah7xel08asWjD93rkz0palJsVOjdBpoo1G80D/oKm3u3+ws7m9p76pvefyR6XnXu/sGWgbr2M83nE7lmMBkADAJUlxUSmF9yz90fRJSXlD/xYbpUuIjdIlZKYlzV69NPvBHUcuvVO84+QLZovF5EKqq9KEqTWaMHVMlE4bMzEhOm1WRsrCNfk5Xz1dYTj0uw8P/6yju7/F2/u3cv70ez46UP760G2OitDG5udOuU1Jx2J+9qQbRUSOnr+8x29dFJVKFanTRk9Oic+anBKftXL+9Hte3fzZhoNnaraNtN6yOVPXOH09b+qat3edesnVz0+Oi9KvWjD93k8+u/CWu9uelhyX8U8P3vjzhJiIZMfXdeGaSF24JjI+JiI5fUJcpojI/lNVWxwTAEV2Fz08FgAJAFxq/J/5xs0vxkXrEu299i2l5W/sOnrpvY6e/tb0ifHT163Me2x2RsoilUqlumVR1roJCdFp/12y/wdWq9U60nv/6Lcff9PQ0lUTFREeMy0tcfbtS2YU5E7TL7aPNvzwm7e+XPT6ricb27rrRnufhpauak/3MSEmInlhzqQVh87W7nB8fcXczLu0mjCdJ+851m1yZkJ8dNrkifHTbQnA7pGWtffiHT1469zv3Lpoxv325zuOXHr3L58c+5W7+xQXHZF0++IZBWvyc74qIqJWq8K+vmbB905VNBzs7Td2DZfsXZ83dbWzv+XnTb39nU9Pv2yxWi2ubssd18/82p4TlR/0D5p63WksH7936b/bG//uvsGOP3505Ofltc3HB43mAX1iTPqCnEk3rVow/d7YKF2Ct4/xWNYfy7EARK5cBaDy8UP88Jk8xvD4u7uX/NDe+IuI/G3vmT+U7Dr1cktnb6PJbDFVNbSVP/fWvqcr6tvO2peZm5W67PYlMx4Y5vhfUydbRaSnf7D7dIXh0C//unf9tsMX3rb/MS5al/iddct+qglTa0d7Hzdj8AtuXpS1znE5lUqlXrVg+r0jD2CM2za59FiQM2mFveG6WNty2sPvnzvb6XTZzp7+tpJPT7/c2tnbaP9DRLgmatbUlIXDvVfO1Inzk+Oi9PblHYfvE2IikmdPS1nsznbHRukSbl+S/YA7x2D6pKS8SRPiptn/+OGBc385ev7ynp6+wS6jyTxY29RRsWnvmd8//dJHD3186Hyx5UoCO57HeDzj1uNjwUOxD5+2j1wGiBHNzkhZNCM9eY79eU/fYOdHpeV/GbqcyWwxvfPp6VccX1ubP/MhrSYs3N3PfGvHqZea2nsu25+nJsdOXT532p3e2D+jyTzQP2jsFRGZkZ48Z0pK/Az73+bNSL0hOT4qVUSks6e/VQnHY3522o0iIscvXN7nTm/ZG6xWq7W+patq6EjKcMvfMGT4v2TXqZcdnw93emAkty/JLnClp341lpJipzo+Hxhm9GDQaB4o3nHyhbqmzkuB8D1191gA9hEAYIQGZ9Jyx+enKgwHjSbzoLNlz1U3He0dMHbbn8dEhsdnOSQPrjJbLKZ9J6s+cnxt6ezJt3pj/0xmi2nvyaoP7c9vWZR139X/L5yxzv7/XccqNvn7WMRG6RLsydix8/V7lBAfqiGT0rr7BjucLafTaiIW5qTfZH/e2tnbuO2zC287ntpZkD1peaROGz3aZ/YPGnurDe3n7T3dO5fN/Jo7DaXj8zX5OQ9lpSfnBcN31dVjAZAAwCXT0hJnOT6va+qoGLEX0nzt7ONpaYkzPflcx9MJIiKZaUmzVV66PGbHkUvvWkWsVxKNKbdGR4bHpSXHZczKmLjA3hvce6LyQ38fi3kz0m5QqVSqAaOpv6yy8bACGhxVanLsFPtzi9VquXi5pczZsgtzJt2kC9dE2p8fOlO73SpidZxzodWE6RbNTF81eiMu1nc+Pf1b+/OV86ff43hqYSSVDdfG1cSE6LR//drK5zY8vvb1v/vSkh/cumjG/Y6jQAHU+Lt8LAA7JgFilF5neLzj857+wc6Rlu/uu/bvcVGfzx1wR2dv/zUzrzVhak1khDZmuElNP/727b9z9vqFupZTRX/e9Y8jfVZjW3fdqUsNB6+bnpqv1YSFr5g77a7k+OhU+98PnK7e2jPg/mSqsWyTMwtss/9PjzAK4ytx0RFJa5ZmP5AUG5lif2374YslLR29Dc6WXzYn45rh/VLbDPWDZbXb7lo26+v212+Yk7Ha2WV7Q52uMBw8V910bObUifM1YWrtPTfOfuS1Dw7/bLT1Ljd3Vh4+V7dr0cz0lY6vJ8dHpSbHR6UuzZ1yq4hIQ2tXzft7zrz22dnand48xuMRI+4eC8AxAeBGQBjhQKlUTo6daqSeyJBRgdGOt9P3G+ZaaZWHsTPaOqrthy++c9301HwRkVULs74cHaGN/XyE4OJ7MvwkLJ98B3ThmshZGRMXiogcLb+8ZwyfrRpLmTprsDp7+ls/Ki1/45PPLrzt7L2SYiMnzpw6Yb79eX1LV3VtY8clEVHVt3RW1zZ1XLJf2TBjcvJ1ExOi0x3ngAy3H+98evq3//b1Vc+JiFyfN3X1R6Xn33TlOL26+bP/6Ojpb101f/o9arUqzNmbpybFTim8Z+mPEmIiJtj2yx/1nGq8jwUCpNplBABK0Nk70G6fCCciEh0RHjvS8o4Np4hIV99gu2cjD9eOHJjMFlNf/+fzC4b60W8/fnQsl2OVVRg+M7R21+qTYiYnxUZOtL9+rrrpWF1zZ4Xj8LWrxrpNjuZk6pdqNWHhZovFdPJiQ6miehFhYdpInTZGdeWKji9c9nn9nIzVjonhwbJrr08/eKZ2uz0BuDJaMHX1+3vO/G60z710ubXs2PnLe+dnT1quUqlU992U9+2G1q6a0dYzmsyDb3xy/PkP9p97fUHOpBtnTpkwb8bkCdc5mzR37425j+48eun9oTccGq9jPJ4x4sqxAEgA4LLK+rZzmQ7zANIdKmpnvf+0CXEZQ9f35HMz05KumXtQcbm1zJsVmlXEuuPIxXe/etu87zi+vu3wxRIlHIcFtsmY5TXNJxwnWvraj3778aPN7T31mZOSZn/7rsVPJ8VFpURFaGPvXj774YhwTVTxjpMvDF1n2ZBr/+9dkfvovStyHx3uM5blZdy+ac+Z37tyvN/59PQrc2ekLVOrVOr52WnLy2u0x11Obnv6W3cdvfT+rqOX3hcRmZISP2Nt/syvLpk9+WbHkZe05NgMT+/aqLRjAThiEiBGdGzI3ebyMvWLbdfkf8HMqRPmR+m0Mfbn3X2DHRfrWk6534tRa4ZeEnZwyA16vGHfqaotjjeVaensNZy4UL/f38cgTK3WzMm6cnrCNvzvVyazxXi+pvnEC++W/rvjrPrblmTfP2PIVR/TJyXl6pNiJrvz/snxUanZUybMdWXZ+pau6v2nqrfan+dMmTDP0/2qaey48Mqmgz9pau+pH5LYKvb76c6xAJwlANwIiMewjzNVjUcv1LWctgdMTGR4/JqlOQ8OXS5MrdZ+eUXetx2D66PSc28aTWajuHkjmoKb5z4xMSE6zf7HhpauGtss/LHc0GbUG6r0D5r69p+qutqY7Dx66f0hN4IZ7fPGsk3DPmZOnbggSqeNsYpYj52v3zcO3z93tnHY5asa2soPnqnd7vCi6t4Vud9yXP+GIZP/fvjK1kcKi0puG/p4+qWPvn7NKMCcjNXi4g10Nu0p+/1wQ/RD92dWxsSFX1l13eORVxLVL+yvVUQsFqvZvrLFYjU3tfc0jOMxHs+4detY8OBGQMKNgOCuVzYd+onj/dDvuXH2I/fdlPftpLioFE2YWpuRmpDz5Fdu+Mn0SUmz7cucuNhw4ONDF4pdeX+ViCoqQhubl6lf8tQDN/7s5oWf332vs2eg7fmS/f/LZB79dwXGw18+Of68vVHaUlr+phLKf0F22nKRK6dT2rv7mpUUG5v3n/2TY89z5tSJ83JsvXdNmFq7ePbkVfa/tXf3txhanf9QVEtHb4PjrPXFM9NXhmtduwVza1dfk22ipkujKauXZj9Q9D/veONrt8//bl6mfklslC5BE6bWJMdHpT5469wnHEcsjl24vK9vwNgTCN/TkY4F4HS0lSLAqBVsZ2/jhj/u+M5j9yz9wfRJSbkqlUp1x/UzH7rj+plf+CU6q9Vq3XH00nvF20++ONrvAIiI/Pjbt7823N9sPwb0nx3do9+Fb6T3+csnx5/fceTiu74ut/HYJpWIal72pBtERI6dv7xXabHR0NJVc+hs7Y6ls6fcYn/t7uWzv/nzN3Z/f372pBscTwmdq246NtJ7na1uOrb8uoy1IlfOvS/MSV9x4HT1J65sxwcHzr2+Yt60OyPCtVGuLK8L10SuXDD97pULpt893DJ1zZ2Vr3987NdKjxFXjgW1GEgA4LGWzl7Df/xp5z/mZeoXL541eVVWelJeQkxEcrhGo+sdMHY3tffUl1c3Hd99ovKD0X64ZyiLxWoeNJkGuvsGO1s6ehuqGtrLD5RVb6tt7LgY6uU+LS1pln12uj9//W/Enue+s39aMmvyzfaZ/jOnTpw3c+rEecvmXDv571x104gT9M5VNx23JwAiV24d7GoC0NM32Lml9PybI00utI2inP39h0f+a4o+fsaUifHTE2IjJ0TqtNGROk201SrW7r7BzrqmjktHz1/eu+9k1Ue+Gnny9rEYrewRmlS5Gal6X37gxvXrdIVFJQMUPTC6dSvn/N3a/JwHG1q7an70ysffokSA4OXr9pE5AICCzc9Osw3/1++jNACMJ04BAApGrx8AIwAAAGBcRwD4LQAAAJTBZ+0jIwAAAIQgEgAAAEgAAABAKGAOAAAAysEcAAAAQAIAAABIAAAAAAkAAABwC5MAAQBQDp+1j2ETE2Jifblnm/aesWxcv06zae8ZC8cZuNaimelz/s+3b3+qqb2npbapoyFYPiuQtwnwhY3r12kKi0p8+vPTnAIAACAEqXIzUieFQqYDAAAjAJ/z1xwAEeYBAADgt3ZRQ3kD3rNoZvqcx+/Nf8jxtd4BY39ze0/r7uMVhz49XnnIarVahy7/8qaDbx46U3tiuNeGkxQXlXDroqwb8jL12clxUQkqlUrV3t3X2dDa3XTwTM2Jo+WXy4wms3Gsn+Vsvxxt2ntm+6a9Z7Y5W9ZqtVq7+wZ7L11urf7bvjM7qhra60bafwAkAEDAcmzQYiLDo1bMy1zytdUL7k2Oj04s2XVqy3h8xtys1FmP3b30wcqGtrq/bj+xubK+rdZotphSEqOTb5iTsfCROxbdnxATEbf14Pnd3tgvV5cNU6vDpujj0x65Y9H9//LQysee/f225w2t3c1ECeBbfpkEWFhUYt64fl0YxY9Q1N032PvhgXO76po7DUtzp8wbj/fUJ8VMKLwn/6tnq5su/eLNPa+WVTZe6B0w9htNZlNdU6eheMfJD//jTztf7OwZ6PL3/pstFnNlfVvtX7ef/CBcG6a98bppi4gKhLKN69eFFRaVmP0xAuDPc/HMA0CoUDmLd5PJbBrme+BsedVw35m1+Tk3hWvDtMU7Tn5ouXJK4QvLVRva66sN7fUuvq/Kxe+nyo3v8TXLNrZ1t4iIJMZGxo/h84FgqiOCfwQACGXRkeFRa/JzVqRPiNPvOHLpwHi8Z16mPrupvafV3qgGAn1SzAQRkdbO3g6iAvA95gAAPvDY3UsfeOzupQ/Yn1tFrB8fOr9n++ELY04A1CqVOj4mMra8uqnS3/tl9/M3dv/2XHVThbN1wtTqsKn6+LQHbrnujt5+Y9/uE5WfESEACQAQlF7edPCv9slyUTptxKyMidO/eceidQmxkfEvv3/wzTG9+QgDh4/euej+ZXMyFtifV9S31m74484XvbFf7iYLnT393T/7866Xm9p7WokQwD8JgF/OsxUWlVg3rl+nLiwqsXIYEMRUQ//fO2AcOFJ++Uz6xPh9dy+ffcvOo5cOnq9prhxu+WFeu8pisVo7uvu6kuKivnAu/bUPDpe89sHhEhGRDX+/9vsuvK/KtdTC5eWu/t2WLJzUasK0udNSsh69a/H9D946965fv7X3DxaL1eLB+wIBb+P6dSpbO8gcACBUGFqvnK9PnxCXMtb3Ol1huDAxITopJTEmSen7bTSZjccv1J99feuxTbnTUrJuX5x9A9EA+B4JAOAn+qSYZJErQ+Fjfa8tped3G01m41dWzVmrUqkCoud88EzNiYr61to7l81cGR0RHklEACGUANhOAzDMh5ASqdNGLMyZlHvb4hk31Ld0Np642FA+1vdsaO1qfnnTweLZ01Ky/umB5Y/MzkjJitRpIzRhak1yXFTCTfMyF8dEhEdZraKoU27vflr2SaROG7E2P2cFkYFQ4zD87xdMAgR8wHEC3IDRNNja2du+48jF0q2Hzu81mS0md9/D0e8+OFyy71TV0WPn68/8+6ufPHfrohnLvnrb3DuT46ITVSqRjp7+7paO3vb3957ZXlpWc3w8Pmu05Q6drT358vsH/zra55yparx4rrqp4pZFWddvO3xhP5EC+I4qNyN1qp8zICksKgn0LC7NYVSjnrACAOpbpbd/fp8DUFhUIhvXrwuKYHT2HABAfavEzi+TAAEACEEkAAAAhCBVbkZqhhI2ZOP6ddbCopKAvCJg4/p1qfb/FxaVNBBWAEB9q/T2jqsAxgGNPgBQ3wYatYIOqmrj+nXcFhgAELSUNNrNHAAAAEKQ334MaBhW4QdAAADBSzHtnKJGAAqLStQb16+zEB8AgGCzcf06S2FRiWLaXU4BAAAQghSXADAKAACg9+99SpsD4Ii5AACAYKKodk2RpwAKi0rCNq5fZyZWAABB0Ps3FxaVhCltu5gDAABACFJsAsAoAACA3n+IjgCQBAAAaPy9Q8mTAB0xIRAAEIgU234pfg5AYVGJZuP6dSZiCAAQQL1/U2FRiaJ/cI9JgAAAhKCASAAYBQAA0PsfX6rcjNSsACpUY2FRiZbwAgDQToVQAkASAIzrd+nqd7+wqOQiJQKEVvvEHAAgxBt/Z88BBL+ASwAKi0q0G9evM3LogPFp/EkCgNDr/YsEzn0AhiYB4RvXrxssLCoJJ+yAccU9NwD3G/+AbI8C9hSAPQkg9AAANP4hlAAA8Dh5vuTO6wCCU0AnAIwCAOOTBND4A6HV+xe5chlgdhAchIHCohId4QgAoN0JgREAh96LbuP6dQOEJACAxj+EEgCSAAAAjX+IJgAkAQAAGv8QTQBIAgAANP6uUeVmpOYE6cHqLywqiSBsAQC0JyEwAuAwEhCxcf26fkIXAEDjH0IJAEkAAIDGf3hBewpg6EG0JwSENACANuNKAjAzhA5qX2FRSSThDQAI9XYipH4LoLCoJHLj+nV9hDgAINQ7iSE1AuB4kO0JASEPADT8odgmhGQCEKrZHgCAdsAxAZgV4ge/t7CoJIqvAQBQ/5MAhGAQiIiQCAAAdT4JAEEBAKCOJwEItSAhQACAej3YE4DZFIPTYOmxZYrRlAYAUJeTABA8AADqbhIAggkAQF1NAhAywUWAAQD1MgkAmSYBBwDUwQGXAORSDGMOwm6H7DOGEgEA6lsSAIITAEC9SgJA0AIAqD9JAEIymAlqAKB+VEICkEcx+C3ou5y9XlhUEkvpAKDOAwkAXxIACHg09CQAAADAz9QUAQAAoUcjIiqKAQAARgAAAAAJAAAAIAEAAAABjzkAAAAwAgAAAEgAAAAACQAAACABAAAAAYpJgAAAMAIAAABIAAAAAAkAAAAIDswBAACAEQAAAEACAAAASAAAAEBwYA4AAACMAAAAABIAAABAAgAAAIIDcwAAAGAEAAAAkAAAAAASAAAAEBz+P6xXtHH2NMYsAAAAAElFTkSuQmCC';
-(function(){
-  try{
-    [180,167,152,120].forEach(function(sz){
-      var l=document.createElement('link');
-      l.rel='apple-touch-icon';l.sizes=sz+'x'+sz;l.href=LOGO_URI;
-      document.head.appendChild(l);
-    });
-    var fav=document.createElement('link');fav.rel='icon';fav.href=LOGO_URI;document.head.appendChild(fav);
-  }catch(e){}
-})();
+var LOGO_URI = '';
+
 </script>
 <script>
 const { useState, useEffect, useRef } = React;
@@ -86,14 +93,14 @@ function cloudSignedIn(){ return !!(cloudAuth && cloudAuth.currentUser); }
 
 const EMBEDDED_BACKUP = { "t": [], "v": 26, "date": null };
 const OL = 'Ölmeztur', PLAKA = '16 LMZ 55';
-const NAV = '#1B1535', NAV2 = '#0A0820', GOLD = '#D4A96A';
-const G = '#5A8A6A', O = '#B8936A', R = '#B05A5A', BR = '#5B6A8A';
-const TX = '#1A1A2E', SB = '#7A7A8E', INP = '#F5F4FA', BOR = '#E0DEEC';
+const NAV = '#0F2744', NAV2 = '#081A2E', GOLD = '#B08D57';
+const G = '#16794F', O = '#9A6B2F', R = '#B02828', BR = '#475569';
+const TX = '#0F172A', SB = '#64748B', INP = '#F8FAFC', BOR = '#E2E8F0';
 const TIPLER = [
-    { id: 'arrival', n: 'Geliş', ico: '🛬', c: '#4A7A5A', bg: '#F0F5F1', b: '#B8CCBE' },
-    { id: 'departure', n: 'Gidiş', ico: '🛫', c: '#8A6B50', bg: '#F8F0E8', b: '#D4C0A8' },
-    { id: 'tour', n: 'Tur', ico: '🗺️', c: '#8A7B50', bg: '#F8F2E8', b: '#D4C4A0' },
-    { id: 'intercity', n: 'Şehirlerarası', ico: '🛣️', c: '#5B6A7A', bg: '#F0EEF0', b: '#B0B8C4' },
+    { id: 'arrival', n: 'Geliş', ico: '🛬', c: '#16794F', bg: '#ECFDF5', b: '#A7F3D0' },
+    { id: 'departure', n: 'Gidiş', ico: '🛫', c: '#9A6B2F', bg: '#FFFBEB', b: '#FDE68A' },
+    { id: 'tour', n: 'Tur', ico: '🗺️', c: '#92591A', bg: '#FEF3C7', b: '#FCD34D' },
+    { id: 'intercity', n: 'Şehirlerarası', ico: '🛣️', c: '#475569', bg: '#F1F5F9', b: '#CBD5E1' },
 ];
 const VEHS = [
     { id: 'vito', n: 'Vito', cap: '1-6', ico: '🚐' },
@@ -550,7 +557,7 @@ function LocIn({ lbl, field, value, sugg, show, onChange, onSel, onFocus, onBlur
         React.createElement("span", { className: "lbl" }, lbl),
         React.createElement("div", { style: { position: 'relative' } },
             React.createElement("input", { className: "inp", value: value, onChange: e => onChange(field, e.target.value), onFocus: onFocus, onBlur: onBlur, placeholder: "\u015Eehir, havaliman\u0131, otel, il\u00E7e..." }),
-            show && sugg.length > 0 && (React.createElement("div", { style: { position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 30, marginTop: 3, background: '#fff', border: '1.5px solid ' + BOR, borderRadius: 12, boxShadow: '0 8px 24px rgba(91,74,63,.14)', maxHeight: 200, overflowY: 'auto' } }, sugg.map((s, i) => (React.createElement("button", { key: i, onMouseDown: () => onSel(field, s.n), style: { width: '100%', padding: '9px 13px', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid #EEF2FB', cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center', color: TX, fontSize: '13px' } },
+            show && sugg.length > 0 && (React.createElement("div", { style: { position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 30, marginTop: 3, background: '#fff', border: '1.5px solid ' + BOR, borderRadius: 12, boxShadow: '0 8px 24px rgba(15,23,42,.12)', maxHeight: 200, overflowY: 'auto' } }, sugg.map((s, i) => (React.createElement("button", { key: i, onMouseDown: () => onSel(field, s.n), style: { width: '100%', padding: '9px 13px', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid #EEF2FB', cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center', color: TX, fontSize: '13px' } },
                 React.createElement("span", { style: { fontSize: 14 } }, s.i),
                 React.createElement("span", null, s.n)))))))));
 }
@@ -659,16 +666,16 @@ function AracTab({ tip, aracK, setAracK }) {
     return (React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
         React.createElement("div", { className: "card" },
             React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 } },
-                React.createElement("img", { src: LOGO_URI, style: { width: 44, height: 44, borderRadius: 12, objectFit: 'cover', border: '1px solid rgba(196,149,106,.35)', flexShrink: 0, background: '#fff' }, alt: PLAKA + ' logo' }),
+                React.createElement("img", { src: LOGO_URI, style: { width: 44, height: 44, borderRadius: 12, objectFit: 'cover', border: '1px solid rgba(176,141,87,.35)', flexShrink: 0, background: '#fff' }, alt: PLAKA + ' logo' }),
                 React.createElement("div", { style: { flex: 1 } },
                     React.createElement("div", { style: { fontWeight: 800, fontSize: 16, color: TX } }, PLAKA),
                     React.createElement("div", { style: { fontSize: 11, color: SB } }, "Mercedes Vito \u00B7 Ara\u00E7 Defteri")),
                 React.createElement("input", { type: "month", value: ay, onChange: e => setAy(e.target.value), style: { background: INP, border: '1.5px solid ' + BOR, borderRadius: 9, padding: '5px 9px', color: TX, fontSize: 13, fontWeight: 700 } })),
-            React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 } }, [['+' + fr(topG) + '₺', 'Gelir', G, '#F0F5F1'], ['-' + fr(topGid) + '₺', 'Gider', BR, '#F8F0E8'], [(topNet >= 0 ? '+' : '-') + fr(topNet) + '₺', 'Net', topNet >= 0 ? G : R, topNet >= 0 ? '#F0F5F1' : '#F9EFEE']].map(([v, l, col, bg]) => (React.createElement("div", { key: l, style: { background: bg, borderRadius: 10, padding: '8px 4px', textAlign: 'center' } },
+            React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 } }, [['+' + fr(topG) + '₺', 'Gelir', G, '#ECFDF5'], ['-' + fr(topGid) + '₺', 'Gider', BR, '#FFFBEB'], [(topNet >= 0 ? '+' : '-') + fr(topNet) + '₺', 'Net', topNet >= 0 ? G : R, topNet >= 0 ? '#ECFDF5' : '#FEF2F2']].map(([v, l, col, bg]) => (React.createElement("div", { key: l, style: { background: bg, borderRadius: 10, padding: '8px 4px', textAlign: 'center' } },
                 React.createElement("div", { style: { fontSize: 9, fontWeight: 700, color: col, letterSpacing: .4, marginBottom: 1 } }, l.toUpperCase()),
                 React.createElement("div", { style: { fontSize: 15, fontWeight: 800, color: col } }, v)))))),
         React.createElement("div", { className: "card", style: { display: 'flex', flexDirection: 'column', gap: 10 } },
-            React.createElement("button", { onClick: () => setOpenYearly(v => !v), style: { width: '100%', background: '#FAF7F4', border: '1px solid ' + BOR, borderRadius: 12, padding: '12px 14px', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, cursor: 'pointer' } },
+            React.createElement("button", { onClick: () => setOpenYearly(v => !v), style: { width: '100%', background: '#F8FAFC', border: '1px solid ' + BOR, borderRadius: 12, padding: '12px 14px', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, cursor: 'pointer' } },
                 React.createElement("div", null,
                     React.createElement("div", { style: { fontWeight: 800, fontSize: 14, color: TX } }, '📈 ' + yil + ' Yıllık Kazanç'),
                     React.createElement("div", { style: { fontSize: 11, color: SB } }, yilSeferleri.length + ' sefer kaydı')),
@@ -676,11 +683,11 @@ function AracTab({ tip, aracK, setAracK }) {
                     React.createElement("div", { style: { fontSize: 16, fontWeight: 800, color: yilNet >= 0 ? G : R } }, fn(yilNet) + '₺'),
                     React.createElement("div", { style: { fontSize: 16, color: SB } }, openYearly ? '▾' : '▸'))),
             openYearly && React.createElement(React.Fragment, null,
-                React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 } }, [['+' + fr(yilGelir) + '₺', 'Yıllık Gelir', G, '#F0F5F1'], ['-' + fr(yilGider) + '₺', 'Yıllık Gider', BR, '#F8F0E8'], [(yilNet >= 0 ? '+' : '-') + fr(yilNet) + '₺', 'Yıllık Net', yilNet >= 0 ? G : R, yilNet >= 0 ? '#F0F5F1' : '#F9EFEE']].map(([v, l, col, bg]) => (React.createElement("div", { key: l, style: { background: bg, borderRadius: 10, padding: '8px 4px', textAlign: 'center' } },
+                React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 } }, [['+' + fr(yilGelir) + '₺', 'Yıllık Gelir', G, '#ECFDF5'], ['-' + fr(yilGider) + '₺', 'Yıllık Gider', BR, '#FFFBEB'], [(yilNet >= 0 ? '+' : '-') + fr(yilNet) + '₺', 'Yıllık Net', yilNet >= 0 ? G : R, yilNet >= 0 ? '#ECFDF5' : '#FEF2F2']].map(([v, l, col, bg]) => (React.createElement("div", { key: l, style: { background: bg, borderRadius: 10, padding: '8px 4px', textAlign: 'center' } },
                     React.createElement("div", { style: { fontSize: 9, fontWeight: 700, color: col, letterSpacing: .25, marginBottom: 1 } }, l.toUpperCase()),
                     React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: col } }, v))))),
                 yilAylari.length > 0 ? React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
-                    yilAylari.map(item => React.createElement("div", { key: item.key, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderRadius: 10, background: '#FAF7F4', border: '1px solid ' + BOR } },
+                    yilAylari.map(item => React.createElement("div", { key: item.key, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderRadius: 10, background: '#F8FAFC', border: '1px solid ' + BOR } },
                         React.createElement("div", null,
                             React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: TX, textTransform: 'capitalize' } }, item.ad),
                             React.createElement("div", { style: { fontSize: 10, color: SB } }, item.sefer + ' sefer · +' + fr(item.gelir) + '₺ · -' + fr(item.gider) + '₺')),
@@ -733,7 +740,7 @@ function AracTab({ tip, aracK, setAracK }) {
             const gunAcik = expanded['g_' + tarih];
             const tarihL = new Date(tarih).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
             return (React.createElement("div", { key: tarih, style: { display: 'flex', flexDirection: 'column', gap: 6 } },
-                React.createElement("button", { onClick: () => setExpanded(p => ({ ...p, ['g_' + tarih]: !p['g_' + tarih] })), style: { width: '100%', background: gunAcik ? NAV : '#fff', border: '1px solid ' + (gunAcik ? NAV : BOR), borderRadius: 12, padding: '11px 14px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 1px 6px rgba(91,74,63,.06)' } },
+                React.createElement("button", { onClick: () => setExpanded(p => ({ ...p, ['g_' + tarih]: !p['g_' + tarih] })), style: { width: '100%', background: gunAcik ? NAV : '#fff', border: '1px solid ' + (gunAcik ? NAV : BOR), borderRadius: 12, padding: '11px 14px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 1px 6px rgba(15,23,42,.06)' } },
                     React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
                         React.createElement("div", null,
                             React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: gunAcik ? '#fff' : TX } }, tarihL),
@@ -790,7 +797,7 @@ function AracTab({ tip, aracK, setAracK }) {
                                         fr(k.tutar),
                                         "\u20BA"),
                                     React.createElement("button", { onClick: () => silGider(k.id), style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: R } }, "\u2715")))); }))),
-                            React.createElement("div", { style: { background: sNet >= 0 ? '#F0F5F1' : '#F9EFEE', borderRadius: 9, padding: '8px 12px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                            React.createElement("div", { style: { background: sNet >= 0 ? '#ECFDF5' : '#FEF2F2', borderRadius: 9, padding: '8px 12px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
                                 React.createElement("span", { style: { fontSize: 11, color: SB, fontWeight: 600 } }, "Net K\u00E2r"),
                                 React.createElement("span", { style: { fontSize: 18, fontWeight: 800, color: sNet >= 0 ? G : R } },
                                     fn(sNet),
@@ -806,7 +813,7 @@ function AracTab({ tip, aracK, setAracK }) {
                                     React.createElement("button", { onClick: () => { setAddGiderId(null); setGf({ kat: 'fuel', tutar: '', not: '' }); }, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 10, padding: '0 14px', cursor: 'pointer', fontSize: 16 } }, "\u2715")))) : (React.createElement("button", { onClick: () => { setAddGiderId(sefer.id); setGf({ kat: 'fuel', tutar: '', not: '' }); }, style: { width: '100%', background: '#fff', color: BR, border: '1.5px dashed ' + BOR, borderRadius: 9, padding: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', marginBottom: 10 } }, "+ Gider Ekle")),
                             React.createElement("div", { style: { display: 'flex', gap: 6 } },
                                 React.createElement("button", { onClick: () => duzenle(sefer), style: { flex: 1, background: '#fff', color: NAV, border: '1px solid ' + BOR, borderRadius: 9, padding: '8px 0', fontWeight: 700, fontSize: '12px', cursor: 'pointer' } }, "\u270F\uFE0F D\u00FCzenle"),
-                                React.createElement("button", { onClick: () => silSefer(sefer.id), style: { flex: 1, background: '#F9EFEE', color: R, border: 'none', borderRadius: 9, padding: '8px 0', fontWeight: 700, fontSize: '12px', cursor: 'pointer' } }, "\uD83D\uDDD1\uFE0F Sil"))))));
+                                React.createElement("button", { onClick: () => silSefer(sefer.id), style: { flex: 1, background: '#FEF2F2', color: R, border: 'none', borderRadius: 9, padding: '8px 0', fontWeight: 700, fontSize: '12px', cursor: 'pointer' } }, "\uD83D\uDDD1\uFE0F Sil"))))));
                 })));
         }),
         msf.length > 0 && (React.createElement("button", { onClick: () => {
@@ -872,14 +879,78 @@ function HesapTab({ T, sT, agencies, tip }) {
     };
     const excelExport = firm => {
         const { ts, al, ver, net } = ozet(firm);
-        const ozRow = [['Firma', firm], ['Tarih', new Date().toLocaleDateString('tr-TR')], ['Toplam Transfer', ts.length], ['Alacak (₺)', Math.round(al)], ['Verecek (₺)', Math.round(ver)], ['Net (₺)', Math.round(net)]];
-        const trRows = ts.slice().sort((a, b) => a.date < b.date ? -1 : 1).map((t, i) => ({ 'No': i + 1, 'Tarih': t.date, 'Saat': t.time, 'Alış': t.pickup || '', 'Bırakış': t.dropoff || '', 'Müşteri': t.paymentCollect === 'yes' ? (parseFloat(t.paymentAmount) || 0) : 0, 'Döviz': t.paymentCurrency || 'TRY', 'Araç (₺)': parseFloat(t.driverPayment) || 0, 'Durum': t.status === 'tam' ? 'Tam' : 'Boş', 'Hesap': t.firmSettled ? 'Kapandı' : 'Açık' }));
+        const sorted = ts.slice().sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1);
+        // Split into 3 categories based on origin
+        const benimVerdiklerim = sorted.filter(t => t.yon === 'benVerdim');
+        const onunVerdikleri   = sorted.filter(t => t.yon === 'oVerdi');
+        const altKayitlar      = sorted.filter(t => t.yon === 'alt');
+        // Also group by altAcenta (third-party chain)
+        const chainMap = {};
+        sorted.forEach(t => {
+            if (t.altAcenta && t.altAcenta !== OL && t.altAcenta !== firm) {
+                (chainMap[t.altAcenta] = chainMap[t.altAcenta] || []).push(t);
+            }
+        });
+        const tableHeaders = ['Tarih', 'Saat', 'Güzergah', 'Müşteri ₺', 'Araç ₺', 'Alt ₺', 'Net (₺)', 'Durum'];
+        const row2arr = t => [
+            t.date || '',
+            t.time || '',
+            (t.pickup || '—') + ' → ' + (t.dropoff || '—'),
+            Math.round(parseFloat(t.customerTRY || t.paymentAmount) || 0),
+            Math.round(parseFloat(t.driverPayment) || 0),
+            Math.round(parseFloat(t.altAcentaUcreti) || 0),
+            Math.round(parseFloat(t.netOl) || 0),
+            t.firmSettled ? 'KAPALI' : 'AÇIK'
+        ];
+        const sumNet = list => Math.round((list || []).reduce((s, t) => s + (parseFloat(t.netOl) || 0), 0));
+        const buildSheet = () => {
+            const rows = [];
+            rows.push(['ÖLMEZTUR TURİZM']);
+            rows.push([firm + ' · ' + new Date().toLocaleDateString('tr-TR')]);
+            rows.push([]);
+            // Table 1 — Onun verdiği
+            rows.push([firm + ' verdiği işler (' + onunVerdikleri.length + ')']);
+            rows.push(tableHeaders);
+            onunVerdikleri.forEach(t => rows.push(row2arr(t)));
+            rows.push(['', '', '', '', '', 'Ara Toplam Net:', sumNet(onunVerdikleri), '']);
+            rows.push([]);
+            // Table 2 — Benim verdiğim
+            rows.push(['Ölmeztur verdiği işler (' + benimVerdiklerim.length + ')']);
+            rows.push(tableHeaders);
+            benimVerdiklerim.forEach(t => rows.push(row2arr(t)));
+            rows.push(['', '', '', '', '', 'Ara Toplam Net:', sumNet(benimVerdiklerim), '']);
+            rows.push([]);
+            // Table 3+ — Zincir kaynaklı (altAcenta) üçüncü parti grupları
+            Object.keys(chainMap).forEach(src => {
+                rows.push([src + ' verdiği işler (' + firm + ' üzerinden) (' + chainMap[src].length + ')']);
+                rows.push(tableHeaders);
+                chainMap[src].forEach(t => rows.push(row2arr(t)));
+                rows.push(['', '', '', '', '', 'Ara Toplam Net:', sumNet(chainMap[src]), '']);
+                rows.push([]);
+            });
+            // Alt acenta direct records (if this firm IS the altAcenta in some transfers)
+            if (altKayitlar.length){
+                rows.push(['Alt acenta işleri (' + altKayitlar.length + ')']);
+                rows.push(tableHeaders);
+                altKayitlar.forEach(t => rows.push(row2arr(t)));
+                rows.push(['', '', '', '', '', 'Ara Toplam Net:', sumNet(altKayitlar), '']);
+                rows.push([]);
+            }
+            // Grand total
+            rows.push([]);
+            rows.push(['═══ GENEL TOPLAM ═══']);
+            rows.push(['Toplam Alacak (₺)', Math.round(al)]);
+            rows.push(['Toplam Verecek (₺)', Math.round(ver)]);
+            rows.push(['GENEL KALAN (Net ₺)', Math.round(net)]);
+            rows.push([(net >= 0 ? 'ÖLMEZTUR ALACAKLI' : 'ÖLMEZTUR VERECEKLİ'), Math.round(Math.abs(net))]);
+            return rows;
+        };
+        const ws = XLSX.utils.aoa_to_sheet(buildSheet());
+        ws['!cols'] = [{wch: 12}, {wch: 7}, {wch: 38}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 10}];
         const wb = XLSX.utils.book_new();
-        const s1 = XLSX.utils.aoa_to_sheet(ozRow);
-        XLSX.utils.book_append_sheet(wb, s1, 'Özet');
-        const s2 = XLSX.utils.json_to_sheet(trRows);
-        XLSX.utils.book_append_sheet(wb, s2, 'Transferler');
-        downloadWorkbook(wb, 'Olmeztur_' + firm.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.xlsx').then(ok => tip(ok ? (IS_IOS ? 'Excel paylaşıma hazır' : 'Excel indirildi!') : 'Excel oluşturulamadı'));
+        XLSX.utils.book_append_sheet(wb, ws, 'Hesap');
+        downloadWorkbook(wb, 'Hesap_' + firm.replace(/[^a-zA-Z0-9]/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.xlsx');
+        tip('Excel indirildi');
     };
 
     const sortHesapTs = (a, b) => {
@@ -928,7 +999,7 @@ function HesapTab({ T, sT, agencies, tip }) {
                         React.createElement("div", { style: { fontWeight: 800, fontSize: 16, color: TX } }, "Transfer Detayı"),
                         React.createElement("div", { style: { fontSize: 11, color: SB, marginTop: 2 } }, (detayT.pickup || '—') + ' → ' + (detayT.dropoff || '—'))),
                     React.createElement("button", { onClick: () => setDetayT(null), style: { background: INP, border: 'none', borderRadius: 16, width: 30, height: 30, cursor: 'pointer', fontSize: 14, flexShrink: 0 } }, "✕")),
-                React.createElement("div", { style: { background: pos ? '#F0F5F1' : '#F8F0E8', border: '1px solid ' + (pos ? '#B8CCBE' : '#D4C0A8'), borderRadius: 12, padding: '10px 12px', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 } },
+                React.createElement("div", { style: { background: pos ? '#ECFDF5' : '#FFFBEB', border: '1px solid ' + (pos ? '#A7F3D0' : '#FDE68A'), borderRadius: 12, padding: '10px 12px', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 } },
                     React.createElement("div", null,
                         React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: pos ? G : BR, textTransform: 'uppercase', letterSpacing: .4 } }, pos ? 'Ölmeztur Alacaklı' : 'Ölmeztur Verecekli'),
                         React.createElement("div", { style: { fontSize: 18, fontWeight: 900, color: pos ? G : BR, marginTop: 2 } }, (pos ? '+' : '-') + fr(detayT.netOl) + '₺')),
@@ -943,20 +1014,20 @@ function HesapTab({ T, sT, agencies, tip }) {
         const pos = t.netOl >= 0;
         const kar = transferNetAmount({ ...t });
         const yonBilgi = t.yon === 'oVerdi'
-            ? { txt: sel + ' verdi', bg: '#F5F2EE', col: NAV }
+            ? { txt: sel + ' verdi', bg: '#F1F5F9', col: NAV }
             : t.yon === 'benVerdim'
-                ? { txt: 'Ben verdim', bg: '#FBF5EE', col: BR }
-                : { txt: 'Alt acenta', bg: '#F8F2E8', col: O };
+                ? { txt: 'Ben verdim', bg: '#FEF3C7', col: BR }
+                : { txt: 'Alt acenta', bg: '#FEF3C7', col: O };
         const badges = React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 5, alignItems: 'center' } },
-            t.driverName && React.createElement("span", { style: { fontSize: 9, color: SB, background: '#FAF7F4', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR } }, '👨🏻‍✈️ ' + t.driverName),
-            ((t.passengerCount || 0) > 0) && React.createElement("span", { style: { fontSize: 9, color: SB, background: '#FAF7F4', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR } }, '👥 ' + t.passengerCount),
+            t.driverName && React.createElement("span", { style: { fontSize: 9, color: SB, background: '#F8FAFC', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR } }, '👨🏻‍✈️ ' + t.driverName),
+            ((t.passengerCount || 0) > 0) && React.createElement("span", { style: { fontSize: 9, color: SB, background: '#F8FAFC', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR } }, '👥 ' + t.passengerCount),
             React.createElement("span", { style: { fontSize: 9, color: NAV, fontWeight: 800 } }, 'Detay ›'));
         const rightSide = React.createElement("div", { style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 } },
             React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: pos ? G : BR } }, (pos ? '+' : '-') + fr(t.netOl) + '₺'),
             React.createElement("button", { onClick: e => { e.stopPropagation(); togSettle(t.id, t.kaynak === 'alt' ? sel + '_alt' : sel); }, style: { display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0' } },
                 React.createElement("div", { style: { width: 18, height: 18, borderRadius: 4, border: '2px solid ' + (t.firmSettled ? G : BOR), background: t.firmSettled ? G : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' } }, t.firmSettled && React.createElement("span", { style: { color: 'white', fontSize: 11, fontWeight: 900, lineHeight: 1 } }, "✓")),
                 React.createElement("span", { style: { fontSize: 9, fontWeight: 700, color: t.firmSettled ? G : SB } }, t.firmSettled ? 'Kapandı' : 'Açık')));
-        return React.createElement("div", { key: t.id + (t.kaynak || '') + (t.yon || ''), onClick: () => setDetayT(t), style: { background: t.firmSettled ? '#F8F5F2' : pos ? '#F0F5F1' : '#F8F0E8', borderRadius: 11, padding: '10px 12px', border: '1px solid ' + (t.firmSettled ? BOR : pos ? '#B8CCBE' : '#D4C0A8'), opacity: t.firmSettled ? .55 : 1, cursor: 'pointer' } },
+        return React.createElement("div", { key: t.id + (t.kaynak || '') + (t.yon || ''), onClick: () => setDetayT(t), style: { background: t.firmSettled ? '#F8F5F2' : pos ? '#ECFDF5' : '#FFFBEB', borderRadius: 11, padding: '10px 12px', border: '1px solid ' + (t.firmSettled ? BOR : pos ? '#A7F3D0' : '#FDE68A'), opacity: t.firmSettled ? .55 : 1, cursor: 'pointer' } },
             React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 } },
                 React.createElement("div", { style: { flex: 1, minWidth: 0 } },
                     React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center', marginBottom: 4 } },
@@ -996,14 +1067,14 @@ function HesapTab({ T, sT, agencies, tip }) {
                         React.createElement("div", null,
                             React.createElement("div", { style: { fontWeight: 800, fontSize: 16, color: TX } }, sel),
                             React.createElement("div", { style: { fontSize: 11, color: SB } }, ts.length, " kayıt"))),
-                    React.createElement("div", { style: { background: net >= 0 ? '#F0F5F1' : '#F9EFEE', border: '1px solid ' + (net >= 0 ? '#B8CCBE' : '#D8B8B8'), borderRadius: 12, padding: '12px', marginBottom: 10, textAlign: 'center' } },
+                    React.createElement("div", { style: { background: net >= 0 ? '#ECFDF5' : '#FEF2F2', border: '1px solid ' + (net >= 0 ? '#A7F3D0' : '#FCA5A5'), borderRadius: 12, padding: '12px', marginBottom: 10, textAlign: 'center' } },
                         React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: net >= 0 ? G : R, marginBottom: 3 } }, net >= 0 ? 'ÖLMEZTUR ALACAKLI' : 'ÖLMEZTUR VERECEKLİ'),
                         React.createElement("div", { style: { fontSize: 26, fontWeight: 800, color: net >= 0 ? G : R } }, fr(Math.abs(net)), " ₺")),
                     React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 } },
-                        React.createElement("div", { style: { background: '#F0F5F1', borderRadius: 10, padding: '9px', textAlign: 'center' } },
+                        React.createElement("div", { style: { background: '#ECFDF5', borderRadius: 10, padding: '9px', textAlign: 'center' } },
                             React.createElement("div", { style: { fontSize: 9, fontWeight: 700, color: G, marginBottom: 2 } }, "ALACAK"),
                             React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: G } }, fr(al), " ₺")),
-                        React.createElement("div", { style: { background: '#F8F0E8', borderRadius: 10, padding: '9px', textAlign: 'center' } },
+                        React.createElement("div", { style: { background: '#FFFBEB', borderRadius: 10, padding: '9px', textAlign: 'center' } },
                             React.createElement("div", { style: { fontSize: 9, fontWeight: 700, color: BR, marginBottom: 2 } }, "VERECEK"),
                             React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: BR } }, fr(ver), " ₺")))),
                 React.createElement("div", { className: "card" },
@@ -1017,14 +1088,25 @@ function HesapTab({ T, sT, agencies, tip }) {
                     React.createElement("div", { style: { fontWeight: 700, fontSize: 13, color: TX, marginBottom: 10 } }, "Transferler"),
                     React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 12 } },
                         renderHesapBolum(sel + ' verdiği işler', onunVerdikleri, NAV),
-                        renderHesapBolum('Ölmeztur verdiği işler', benimVerdiklerim, BR),
+                        renderHesapBolum('Ölmeztur\'un verdiği işler', benimVerdiklerim, BR),
+                        (function(){
+                            // Group altKayitlar and main list by altAcenta source when the chain goes through `sel`
+                            const chainMap = {};
+                            ts.forEach(t => {
+                                if (t.altAcenta && t.altAcenta !== OL && t.altAcenta !== sel) {
+                                    (chainMap[t.altAcenta] = chainMap[t.altAcenta] || []).push(t);
+                                }
+                            });
+                            const chainKeys = Object.keys(chainMap);
+                            return chainKeys.map(src => renderHesapBolum(src + '\'nun verdiği işler (' + sel + ' üzerinden)', chainMap[src], O));
+                        })(),
                         altKayitlar.length > 0 && renderHesapBolum('Alt acenta işleri', altKayitlar, O))),
                 React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7 } },
                     React.createElement("button", { onClick: () => { copyText(sirketMsg(sel)); tip('Kopyalandı!'); }, style: { background: G, color: '#fff', border: 'none', borderRadius: 13, padding: '11px 4px', fontWeight: 700, fontSize: '11px', cursor: 'pointer', lineHeight: 1.5 } },
                         "📤 Şirkete",
                         React.createElement("br", null),
                         "Kopyala"),
-                    React.createElement("button", { onClick: () => excelExport(sel), style: { background: '#5A8A6A', color: '#fff', border: 'none', borderRadius: 13, padding: '11px 4px', fontWeight: 700, fontSize: '11px', cursor: 'pointer', lineHeight: 1.5 } },
+                    React.createElement("button", { onClick: () => excelExport(sel), style: { background: '#16794F', color: '#fff', border: 'none', borderRadius: 13, padding: '11px 4px', fontWeight: 700, fontSize: '11px', cursor: 'pointer', lineHeight: 1.5 } },
                         "📊 Excel",
                         React.createElement("br", null),
                         "İndir"),
@@ -1054,7 +1136,7 @@ function HesapTab({ T, sT, agencies, tip }) {
             const { ts, al, ver, net } = ozet(firm);
             if (ts.length === 0)
                 return null;
-            return (React.createElement("button", { key: firm, onClick: () => setSel(firm), style: { width: '100%', background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, padding: '13px 14px', textAlign: 'left', cursor: 'pointer', boxShadow: '0 1px 6px rgba(91,74,63,.06)' } },
+            return (React.createElement("button", { key: firm, onClick: () => setSel(firm), style: { width: '100%', background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, padding: '13px 14px', textAlign: 'left', cursor: 'pointer', boxShadow: '0 1px 6px rgba(15,23,42,.06)' } },
                 React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } },
                     React.createElement("div", { style: { width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 } }, "\uD83C\uDFE2"),
                     React.createElement("div", { style: { flex: 1 } },
@@ -1063,11 +1145,11 @@ function HesapTab({ T, sT, agencies, tip }) {
                             ts.length,
                             " kay\u0131t")),
                     React.createElement("div", { style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 } },
-                        al > 0 && React.createElement("span", { style: { background: '#F0F5F1', color: G, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 } },
+                        al > 0 && React.createElement("span", { style: { background: '#ECFDF5', color: G, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 } },
                             "+",
                             fr(al),
                             "\u20BA"),
-                        ver > 0 && React.createElement("span", { style: { background: '#F8F0E8', color: BR, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 } },
+                        ver > 0 && React.createElement("span", { style: { background: '#FFFBEB', color: BR, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 } },
                             "-",
                             fr(ver),
                             "\u20BA")),
@@ -1131,13 +1213,13 @@ function HesapExtras({ agencies, setAgencies, agencyPhones, setAgencyPhones, dri
                     React.createElement("div", { style: { fontSize: 10, color: SB } }, 'Toplam'),
                     React.createElement("div", { style: { fontWeight: 800, fontSize: 13, color: TX } }, fr(d.total) + '₺'))),
             React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginTop: 8 } },
-                React.createElement("div", { style: { background: '#FAF7F4', borderRadius: 10, padding: 8, textAlign: 'center' } },
+                React.createElement("div", { style: { background: '#F8FAFC', borderRadius: 10, padding: 8, textAlign: 'center' } },
                     React.createElement("div", { style: { fontSize: 9, color: SB } }, isBorc ? 'Ödenen' : 'Tahsilat'),
                     React.createElement("div", { style: { fontWeight: 800, fontSize: 12, color: NAV } }, fr(d.paid || 0) + '₺')),
-                React.createElement("div", { style: { background: '#FAF7F4', borderRadius: 10, padding: 8, textAlign: 'center' } },
+                React.createElement("div", { style: { background: '#F8FAFC', borderRadius: 10, padding: 8, textAlign: 'center' } },
                     React.createElement("div", { style: { fontSize: 9, color: SB } }, 'Kalan'),
                     React.createElement("div", { style: { fontWeight: 800, fontSize: 12, color: kalan > 0 ? R : G } }, fr(kalan) + '₺')),
-                React.createElement("div", { style: { background: '#FAF7F4', borderRadius: 10, padding: 8, textAlign: 'center' } },
+                React.createElement("div", { style: { background: '#F8FAFC', borderRadius: 10, padding: 8, textAlign: 'center' } },
                     React.createElement("div", { style: { fontSize: 9, color: SB } }, 'Durum'),
                     React.createElement("div", { style: { fontWeight: 800, fontSize: 12, color: kalan > 0 ? O : G } }, kalan > 0 ? 'Açık' : 'Kapalı'))),
             React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginTop: 8 } },
@@ -1221,6 +1303,8 @@ function App() {
     const [aracK, setAracK] = useState([]);
     const [debts, setDebts] = useState([]);
     const [openMonths, setOpenMonths] = useState({});
+    const [expandedT, setExpandedT] = useState({});
+    const toggleExpanded = id => setExpandedT(p => ({ ...p, [id]: !p[id] }));
     const [dateRangeStart, setDateRangeStart] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d; });
     const [selectedRangeDay, setSelectedRangeDay] = useState(null);
     const [authReady, setAuthReady] = useState(!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey);
@@ -1808,53 +1892,129 @@ function App() {
         const rt = ROTALAR.find(r => r.id === t.route);
         const vh = VEHS.find(v => v.id === t.vehicle);
         const sc = t.status === 'tam' ? G : t.status === 'iptal' ? R : O;
+        const scBg = t.status === 'tam' ? '#ECFDF5' : t.status === 'iptal' ? '#FEF2F2' : '#FFFBEB';
+        const scBord = t.status === 'tam' ? '#A7F3D0' : t.status === 'iptal' ? '#FCA5A5' : '#FDE68A';
         const sl = t.status === 'tam' ? 'TAM' : t.status === 'iptal' ? 'İPTAL' : 'BOŞ';
         const tk = netKar([t]);
         const collectionState = getCollectionState(t);
-        
         const displayPlate = inferPlate(t);
-        const collectionBadge = collectionState === 'collected' ? '✓ Alınmış' : '⏳ Alınmamış';
-        const vehiclePayTxt = (parseFloat(t.driverPayment) || 0) > 0 ? ((parseFloat(t.driverPayment) || 0).toLocaleString('tr-TR') + '₺') : 'Yok';
-        const payTxt = t.paymentCollect === 'no' ? 'Ödeme yok' : (t.paymentAmount ? (t.paymentAmount + ' ' + t.paymentCurrency) : 'Tutar yok');
-        return React.createElement("div", { key: t.id, style: { padding: '8px 10px', borderBottom: '1px solid ' + BOR } },
-            React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '52px 1fr auto', gap: 8, alignItems: 'start' } },
-                React.createElement("div", { style: { textAlign: 'center', background: '#FAF7F4', border: '1px solid ' + BOR, borderRadius: 10, padding: '5px 2px' } },
-                    React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: TX, lineHeight: 1 } }, t.time || '--:--'),
-                    React.createElement("div", { style: { fontSize: 9, color: SB, fontWeight: 700, marginTop: 3 } }, tp ? tp.ico + ' ' + tp.n : 'Transfer')),
-                React.createElement("div", { style: { minWidth: 0 } },
-                    React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center', marginBottom: 3 } },
-                        React.createElement("span", { style: { background: sc, color: '#fff', borderRadius: 5, padding: '2px 6px', fontSize: 8, fontWeight: 800, letterSpacing: .3 } }, sl),
-                        t.flightCode && React.createElement("span", { style: { background: '#F5F2EE', color: NAV, borderRadius: 5, padding: '2px 6px', fontSize: 8, fontWeight: 800 } }, '✈️ ' + t.flightCode),
-                        t.givenBy && React.createElement("span", { style: { fontSize: 9, color: SB, fontWeight: 700 } }, t.givenBy + (t.assignedTo ? ' → ' + t.assignedTo : ''))),
-                    React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: TX, lineHeight: 1.25 } }, (t.pickup || '—') + ' → ' + (t.dropoff || '—')),
-                    React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 } },
-                        React.createElement("span", { style: { fontSize: 9, color: SB, background: '#FAF7F4', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR } }, '👥 ' + (t.passengerCount || 0)),
-                        t.driverName && React.createElement("span", { style: { fontSize: 9, color: SB, background: '#FAF7F4', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR } }, '👨🏻‍✈️ ' + t.driverName),
-                        vh && React.createElement("span", { style: { fontSize: 9, color: SB, background: '#FAF7F4', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR } }, vh.ico + ' ' + vh.n),
-                        displayPlate && React.createElement("span", { style: { fontSize: 9, color: NAV2, background: '#FBF5EE', borderRadius: 5, padding: '2px 5px', border: '1px solid #F1DFC0', fontWeight: 800 } }, '🚐 ' + displayPlate),
-                        rt && React.createElement("span", { style: { fontSize: 9, color: SB, background: '#FAF7F4', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR } }, rt.ico + ' ' + rt.n),
-                        React.createElement("span", { style: { fontSize: 9, color: SB, background: '#FAF7F4', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR, fontWeight: 700 } }, '💰 Müşteri ücreti ' + payTxt),
-                        React.createElement("span", { style: { fontSize: 9, color: NAV2, background: '#FAF7F4', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR, fontWeight: 700 } }, '🚐 Araç ücreti ' + vehiclePayTxt),
-                        React.createElement("span", { style: { fontSize: 9, color: collectionState === 'collected' ? G : O, background: collectionState === 'collected' ? '#F0F5F1' : '#FBF5EE', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + (collectionState === 'collected' ? '#B8CCBE' : '#E8D8C8'), fontWeight: 700 } }, collectionBadge),
-                        t.childSeat && React.createElement("span", { style: { fontSize: 9, color: SB, background: '#FAF7F4', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR } }, '🪑 ' + t.childSeatCount),
-                        t.notes && React.createElement("span", { style: { fontSize: 9, color: SB, background: '#FAF7F4', borderRadius: 5, padding: '2px 5px', border: '1px solid ' + BOR, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, '📝 ' + t.notes))),
-                React.createElement("div", { style: { textAlign: 'right', minWidth: 102 } },
-                    React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: tk >= 0 ? G : R } }, (tk >= 0 ? '+' : '') + tk.toLocaleString('tr-TR') + '₺'),
-                    React.createElement("button", { onClick: () => toggleSettled(t.id), style: { marginTop: 6, width: '100%', background: collectionState === 'collected' ? '#F0F5F1' : '#FAF7F4', color: collectionState === 'collected' ? G : NAV, border: '1px solid ' + (collectionState === 'collected' ? '#B8CCBE' : BOR), borderRadius: 7, padding: '5px 6px', fontSize: 9, fontWeight: 800, cursor: 'pointer' } }, collectionState === 'collected' ? '✓ Şirket araç ödemesini aldı' : 'Şirket araç ödemesini aldı'))),
-            React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 34px 34px 34px', gap: 4, marginTop: 6 } },
-                React.createElement("button", { onClick: e => { e.stopPropagation(); openMsg(t, 'drv'); }, onTouchEnd: e => { e.stopPropagation(); }, style: { background: '#F0F5F1', color: G, border: 'none', borderRadius: 8, padding: '7px 0', fontWeight: 800, cursor: 'pointer', fontSize: '10px' } }, 'Kaptan'),
-                React.createElement("button", { onClick: e => { e.stopPropagation(); openMsg(t, 'cus'); }, onTouchEnd: e => { e.stopPropagation(); }, style: { background: '#F5F2EE', color: NAV, border: 'none', borderRadius: 8, padding: '7px 0', fontWeight: 800, cursor: 'pointer', fontSize: '10px' } }, 'Misafir'),
-                React.createElement("button", { onClick: e => { e.stopPropagation(); setMsgM({ tp: 'recv', t: t, txt: receiverMsg(t) }); }, onTouchEnd: e => { e.stopPropagation(); }, style: { background: '#FBF5EE', color: NAV2, border: 'none', borderRadius: 8, padding: '7px 0', fontWeight: 800, cursor: 'pointer', fontSize: '10px' } }, 'Karşılamacı'),
-                React.createElement("button", { onClick: e => { e.stopPropagation(); openMsg(t, 'bos'); }, onTouchEnd: e => { e.stopPropagation(); }, style: { background: '#F2EDE8', color: '#7A6050', border: 'none', borderRadius: 8, padding: '7px 0', fontWeight: 800, cursor: 'pointer', fontSize: '9px', lineHeight: 1.1 } }, 'Boş G/D'),
-                React.createElement("button", { onClick: () => copyT(t), style: { background: INP, border: 'none', borderRadius: 8, padding: '7px 0', cursor: 'pointer', fontSize: 12 } }, '⧉'),
-                React.createElement("button", { onClick: () => editT(t), style: { background: INP, border: 'none', borderRadius: 8, padding: '7px 0', cursor: 'pointer', fontSize: 12 } }, '✎'),
-                React.createElement("button", { onClick: () => delT(t.id), style: { background: '#F9EFEE', color: R, border: 'none', borderRadius: 8, padding: '7px 0', cursor: 'pointer', fontSize: 12 } }, '🗑')),
-            t.driverPhone && React.createElement("div", { style: { marginTop: 5, display: 'flex', justifyContent: 'flex-end' } },
-                React.createElement("button", { onClick: () => {
-                    const cl = t.driverPhone.replace(/\D/g, '');
-                    const n = cl.startsWith('0') ? '90' + cl.slice(1) : cl.startsWith('90') ? cl : '90' + cl;
-                    window.open('https://wa.me/' + n + '?text=' + encodeURIComponent(drvMsg(t, !!t.useMaps)), '_blank');
-                }, style: { background: '#E8F0EA', color: '#5A8A6A', border: 'none', borderRadius: 8, padding: '5px 8px', cursor: 'pointer', fontSize: 10, fontWeight: 800 } }, 'WhatsApp')));
+        const vehiclePayTxt = (parseFloat(t.driverPayment) || 0) > 0 ? ((parseFloat(t.driverPayment) || 0).toLocaleString('tr-TR') + '₺') : '—';
+        const payTxt = t.paymentCollect === 'no' ? 'Ödeme yok' : (t.paymentAmount ? (Number(t.paymentAmount).toLocaleString('tr-TR') + ' ' + t.paymentCurrency) : '—');
+        const isOpen = !!expandedT[t.id];
+        const gvn = t.givenBy || '—';
+        const asg = t.assignedTo || '—';
+        const pickup = t.pickup || '—';
+        const dropoff = t.dropoff || '—';
+        const pasName = (t.passengers && t.passengers[0] && t.passengers[0].name) || '';
+        return React.createElement("div", { key: t.id, className: 'tr-row', style: { background: '#fff', border: '1px solid ' + (isOpen ? '#CBD5E1' : '#E2E8F0'), borderRadius: 14, marginBottom: 8, overflow: 'hidden', boxShadow: isOpen ? '0 4px 20px rgba(15,23,42,.08)' : '0 1px 2px rgba(15,23,42,.03)' } },
+            /* Collapsed — always visible */
+            React.createElement("div", { onClick: () => toggleExpanded(t.id), style: { cursor: 'pointer', padding: '13px 14px' } },
+                React.createElement("div", { style: { display: 'flex', gap: 10, alignItems: 'flex-start', justifyContent: 'space-between' } },
+                    React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                        /* Pills row: time + status + flight */
+                        React.createElement("div", { style: { display: 'flex', gap: 5, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' } },
+                            React.createElement("span", { style: { background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: 6, padding: '2px 8px', fontSize: 12, fontWeight: 700, color: TX, fontVariantNumeric: 'tabular-nums' } }, t.time || '--:--'),
+                            React.createElement("span", { style: { background: scBg, color: sc, border: '1px solid ' + scBord, borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 800, letterSpacing: .4 } }, sl),
+                            t.flightCode && React.createElement("span", { style: { background: '#EFF6FF', color: '#1E40AF', border: '1px solid #BFDBFE', borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700 } }, '✈ ' + t.flightCode)
+                        ),
+                        /* Agency flow */
+                        React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: TX, marginBottom: 3, lineHeight: 1.3 } },
+                            React.createElement("span", null, gvn),
+                            React.createElement("span", { style: { color: SB, margin: '0 6px', fontWeight: 500 } }, '→'),
+                            React.createElement("span", null, asg)
+                        ),
+                        /* Route pickup → dropoff */
+                        React.createElement("div", { style: { fontSize: 12, color: SB, fontWeight: 500, lineHeight: 1.35 } },
+                            React.createElement("span", null, pickup),
+                            React.createElement("span", { style: { margin: '0 6px' } }, '→'),
+                            React.createElement("span", null, dropoff)
+                        )
+                    ),
+                    /* Right: amount + status chip */
+                    React.createElement("div", { style: { textAlign: 'right', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 } },
+                        React.createElement("div", { style: { fontSize: 15, fontWeight: 800, color: tk >= 0 ? G : R, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' } }, (tk >= 0 ? '+' : '') + tk.toLocaleString('tr-TR') + ' ₺'),
+                        React.createElement("div", {
+                            onClick: e => { e.stopPropagation(); toggleSettled(t.id); },
+                            style: {
+                                background: collectionState === 'collected' ? '#ECFDF5' : '#FEF9C3',
+                                color: collectionState === 'collected' ? G : '#854D0E',
+                                border: '1px solid ' + (collectionState === 'collected' ? '#A7F3D0' : '#FDE68A'),
+                                borderRadius: 6, padding: '3px 8px', fontSize: 9, fontWeight: 700,
+                                cursor: 'pointer', whiteSpace: 'nowrap', letterSpacing: .2
+                            }
+                        }, collectionState === 'collected' ? '✓ Şirket ödemeyi aldı' : 'Ödeme bekleniyor')
+                    )
+                )
+            ),
+            /* Expanded details */
+            isOpen && React.createElement("div", { style: { borderTop: '1px solid #E2E8F0', padding: '14px', background: '#F8FAFC' } },
+                /* Details grid */
+                React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 7, marginBottom: 10 } },
+                    /* Misafir */
+                    React.createElement("div", { style: { background: '#fff', borderRadius: 9, padding: '8px 10px', border: '1px solid #E2E8F0' } },
+                        React.createElement("div", { style: { fontSize: 9, color: SB, fontWeight: 700, letterSpacing: .5, textTransform: 'uppercase' } }, '👤 Misafir'),
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: TX, marginTop: 2, wordBreak: 'break-word' } }, (pasName || '—') + ' · ' + (t.passengerCount || 0) + ' kişi')
+                    ),
+                    /* Kaptan */
+                    React.createElement("div", { style: { background: '#fff', borderRadius: 9, padding: '8px 10px', border: '1px solid #E2E8F0' } },
+                        React.createElement("div", { style: { fontSize: 9, color: SB, fontWeight: 700, letterSpacing: .5, textTransform: 'uppercase' } }, '👨🏻‍✈️ Kaptan'),
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: TX, marginTop: 2, wordBreak: 'break-word' } }, t.driverName || '—')
+                    ),
+                    /* Plaka */
+                    React.createElement("div", { style: { background: '#fff', borderRadius: 9, padding: '8px 10px', border: '1px solid #E2E8F0' } },
+                        React.createElement("div", { style: { fontSize: 9, color: SB, fontWeight: 700, letterSpacing: .5, textTransform: 'uppercase' } }, '🚐 Plaka / Araç'),
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: TX, marginTop: 2 } }, (displayPlate || '—') + (vh ? ' · ' + vh.n : ''))
+                    ),
+                    /* Güzergah */
+                    React.createElement("div", { style: { background: '#fff', borderRadius: 9, padding: '8px 10px', border: '1px solid #E2E8F0' } },
+                        React.createElement("div", { style: { fontSize: 9, color: SB, fontWeight: 700, letterSpacing: .5, textTransform: 'uppercase' } }, '🛣️ Güzergah'),
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: TX, marginTop: 2 } }, rt ? rt.n : '—')
+                    ),
+                    /* Müşteri Ücreti */
+                    React.createElement("div", { style: { background: '#fff', borderRadius: 9, padding: '8px 10px', border: '1px solid #E2E8F0' } },
+                        React.createElement("div", { style: { fontSize: 9, color: SB, fontWeight: 700, letterSpacing: .5, textTransform: 'uppercase' } }, '💰 Müşteri Ücreti'),
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: TX, marginTop: 2, fontVariantNumeric: 'tabular-nums' } }, payTxt)
+                    ),
+                    /* Araç Ücreti */
+                    React.createElement("div", { style: { background: '#fff', borderRadius: 9, padding: '8px 10px', border: '1px solid #E2E8F0' } },
+                        React.createElement("div", { style: { fontSize: 9, color: SB, fontWeight: 700, letterSpacing: .5, textTransform: 'uppercase' } }, '🚐 Araç Ücreti'),
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: TX, marginTop: 2, fontVariantNumeric: 'tabular-nums' } }, vehiclePayTxt)
+                    ),
+                    /* Ödeme durumu — full row */
+                    React.createElement("div", { style: { gridColumn: '1 / -1', background: collectionState === 'collected' ? '#ECFDF5' : '#FEF9C3', borderRadius: 9, padding: '8px 10px', border: '1px solid ' + (collectionState === 'collected' ? '#A7F3D0' : '#FDE68A'), display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                        React.createElement("div", null,
+                            React.createElement("div", { style: { fontSize: 9, color: SB, fontWeight: 700, letterSpacing: .5, textTransform: 'uppercase' } }, 'Ödeme Durumu'),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: collectionState === 'collected' ? G : '#854D0E', marginTop: 2 } }, collectionState === 'collected' ? '✓ Şirket ödemeyi aldı' : '⏳ Ödeme bekleniyor')
+                        ),
+                        t.altAcenta && React.createElement("span", { style: { background: '#fff', color: BR, border: '1px solid #E2E8F0', borderRadius: 6, padding: '3px 7px', fontSize: 10, fontWeight: 700 } }, 'Alt: ' + t.altAcenta)
+                    ),
+                    /* Notes */
+                    t.notes && React.createElement("div", { style: { gridColumn: '1 / -1', background: '#fff', borderRadius: 9, padding: '8px 10px', border: '1px solid #E2E8F0' } },
+                        React.createElement("div", { style: { fontSize: 9, color: SB, fontWeight: 700, letterSpacing: .5, textTransform: 'uppercase' } }, '📝 Not'),
+                        React.createElement("div", { style: { fontSize: 12, color: TX, marginTop: 2, lineHeight: 1.4 } }, t.notes)
+                    )
+                ),
+                /* Action buttons */
+                React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr)) 38px 38px 38px', gap: 5 } },
+                    React.createElement("button", { onClick: e => { e.stopPropagation(); openMsg(t, 'drv'); }, style: { background: '#ECFDF5', color: G, border: '1px solid #A7F3D0', borderRadius: 8, padding: '8px 0', fontWeight: 700, cursor: 'pointer', fontSize: 10 } }, 'Kaptan'),
+                    React.createElement("button", { onClick: e => { e.stopPropagation(); openMsg(t, 'cus'); }, style: { background: '#EFF6FF', color: '#1E40AF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '8px 0', fontWeight: 700, cursor: 'pointer', fontSize: 10 } }, 'Misafir'),
+                    React.createElement("button", { onClick: e => { e.stopPropagation(); setMsgM({ tp: 'recv', t: t, txt: receiverMsg(t) }); }, style: { background: '#FEF3C7', color: '#854D0E', border: '1px solid #FDE68A', borderRadius: 8, padding: '8px 0', fontWeight: 700, cursor: 'pointer', fontSize: 10 } }, 'Karşılamacı'),
+                    React.createElement("button", { onClick: e => { e.stopPropagation(); openMsg(t, 'bos'); }, style: { background: '#F1F5F9', color: '#334155', border: '1px solid #CBD5E1', borderRadius: 8, padding: '8px 0', fontWeight: 700, cursor: 'pointer', fontSize: 9, lineHeight: 1.1 } }, 'Boş G/D'),
+                    React.createElement("button", { onClick: e => { e.stopPropagation(); copyT(t); }, title: 'Kopyala', style: { background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 0', cursor: 'pointer', fontSize: 13, color: TX } }, '⧉'),
+                    React.createElement("button", { onClick: e => { e.stopPropagation(); editT(t); }, title: 'Düzenle', style: { background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 0', cursor: 'pointer', fontSize: 13, color: TX } }, '✎'),
+                    React.createElement("button", { onClick: e => { e.stopPropagation(); delT(t.id); }, title: 'Sil', style: { background: '#FEF2F2', color: R, border: '1px solid #FCA5A5', borderRadius: 8, padding: '8px 0', cursor: 'pointer', fontSize: 13 } }, '🗑')
+                ),
+                /* WhatsApp if phone available */
+                t.driverPhone && React.createElement("div", { style: { marginTop: 7, display: 'flex', gap: 6, justifyContent: 'flex-end' } },
+                    React.createElement("button", { onClick: e => {
+                        e.stopPropagation();
+                        const cl = t.driverPhone.replace(/\D/g, '');
+                        const n = cl.startsWith('0') ? '90' + cl.slice(1) : cl.startsWith('90') ? cl : '90' + cl;
+                        window.open('https://wa.me/' + n + '?text=' + encodeURIComponent(drvMsg(t, !!t.useMaps)), '_blank');
+                    }, style: { background: '#DCFCE7', color: '#15803D', border: '1px solid #86EFAC', borderRadius: 8, padding: '7px 12px', cursor: 'pointer', fontSize: 11, fontWeight: 700 } }, '📱 Kaptana WhatsApp')
+                )
+            )
+        );
     };
     const renderTransferList = () => {
         const renderSectionDays = rows => {
@@ -1869,7 +2029,7 @@ function App() {
                 const dayTotal = dayRows.length;
                 const dayDone = dayRows.filter(x => x.status === 'tam').length;
                 return React.createElement("div", { key: dayKey, style: { borderTop: '1px solid ' + BOR } },
-                    React.createElement("div", { style: { padding: '8px 10px', background: '#FEFCFA', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 } },
+                    React.createElement("div", { style: { padding: '8px 10px', background: '#F8FAFC', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 } },
                         React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: TX } }, dayKey === 'Tarihsiz' ? 'Tarihsiz' : new Date(dayKey).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })),
                         React.createElement("div", { style: { fontSize: 10, color: SB, fontWeight: 700 } }, dayTotal + ' transfer · ' + dayDone + ' tamam')),
                     React.createElement("div", null, dayRows.map(renderTransferItem)));
@@ -1901,9 +2061,9 @@ function App() {
         const goToday = () => { setSelectedRangeDay(null); const d = new Date(); d.setHours(0,0,0,0); setDateRangeStart(d); };
         const rangeLabel = selectedRangeDay ? new Date(selectedRangeDay).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' }) : rangeDates[0].toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) + ' – ' + rangeDates[RANGE_DAYS - 1].toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
         const isCurrentRange = rangeDateKeys.includes(todayKey);
-        const dateRangeSection = React.createElement("div", { style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 5px rgba(91,74,63,.05)' } },
+        const dateRangeSection = React.createElement("div", { style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 5px rgba(15,23,42,.05)' } },
             /* Üst bar: navigasyon */
-            React.createElement("div", { style: { padding: '10px 10px 6px', background: '#FAF7F4', borderBottom: '1px solid ' + BOR } },
+            React.createElement("div", { style: { padding: '10px 10px 6px', background: '#F8FAFC', borderBottom: '1px solid ' + BOR } },
                 React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 } },
                     React.createElement("button", { onClick: () => shiftRange(-1), style: { background: INP, border: '1px solid ' + BOR, borderRadius: 9, width: 34, height: 34, cursor: 'pointer', fontSize: 16, fontWeight: 800, color: NAV, display: 'flex', alignItems: 'center', justifyContent: 'center' } }, '◂'),
                     React.createElement("div", { style: { textAlign: 'center' } },
@@ -1921,11 +2081,11 @@ function App() {
                         const cnt = dayTransfers.length;
                         const doneCnt = dayTransfers.filter(x => x.status === 'tam').length;
                         const boxBg = isSelected ? 'linear-gradient(135deg,#5A8A6A,#4A7A5A)' : isToday ? 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')' : cnt > 0 ? '#FFFEFA' : INP;
-                        const boxBorder = isSelected ? '#5A8A6A' : isToday ? NAV : cnt > 0 ? '#C4956A' : BOR;
+                        const boxBorder = isSelected ? '#16794F' : isToday ? NAV : cnt > 0 ? '#B08D57' : BOR;
                         return React.createElement("button", { key: dk, onClick: () => setSelectedRangeDay(prev => prev === dk ? null : dk), style: { textAlign: 'center', padding: '6px 2px', borderRadius: 10, background: boxBg, border: '1.5px solid ' + boxBorder, cursor: 'pointer', display: 'block', width: '100%' } },
                             React.createElement("div", { style: { fontSize: 9, fontWeight: 700, color: (isSelected || isToday) ? 'rgba(255,255,255,.7)' : SB, textTransform: 'capitalize' } }, rd.toLocaleDateString('tr-TR', { weekday: 'short' })),
                             React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: (isSelected || isToday) ? '#fff' : TX, lineHeight: 1.2 } }, rd.getDate()),
-                            React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: (isSelected || isToday) ? '#E8D4C0' : cnt > 0 ? G : SB, marginTop: 2 } }, cnt > 0 ? cnt + ' transf.' : '—'));
+                            React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: (isSelected || isToday) ? '#FDE68A' : cnt > 0 ? G : SB, marginTop: 2 } }, cnt > 0 ? cnt + ' transf.' : '—'));
                     }))),
             /* Tarih aralığı transferleri */
             rangeRows.length > 0
@@ -1953,8 +2113,8 @@ function App() {
                 const hasExplicitState = Object.prototype.hasOwnProperty.call(openMonths, monthKey);
                 const isOpen = hasExplicitState ? openMonths[monthKey] : false;
                 const monthTitle = monthKey === 'Tarihsiz' ? 'Tarihsiz' : new Date(monthKey + '-01').toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
-                return React.createElement("div", { key: monthKey, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 5px rgba(91,74,63,.05)' } },
-                    React.createElement("button", { onClick: () => setOpenMonths(p => ({ ...p, [monthKey]: !(Object.prototype.hasOwnProperty.call(p, monthKey) ? p[monthKey] : false) })), style: { width: '100%', background: '#FAF7F4', border: 'none', borderBottom: isOpen ? '1px solid ' + BOR : 'none', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer', textAlign: 'left' } },
+                return React.createElement("div", { key: monthKey, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 5px rgba(15,23,42,.05)' } },
+                    React.createElement("button", { onClick: () => setOpenMonths(p => ({ ...p, [monthKey]: !(Object.prototype.hasOwnProperty.call(p, monthKey) ? p[monthKey] : false) })), style: { width: '100%', background: '#F8FAFC', border: 'none', borderBottom: isOpen ? '1px solid ' + BOR : 'none', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer', textAlign: 'left' } },
                         React.createElement("div", { style: { minWidth: 0 } },
                             React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: TX, textTransform: 'capitalize' } }, monthTitle),
                             React.createElement("div", { style: { fontSize: 10, color: SB, fontWeight: 600 } }, mTotal + ' transfer · ' + mDone + ' tamamlandı · Tahsilat: ' + mCollected + ' alınmış / ' + mWaiting + ' alınmamış')),
@@ -1983,12 +2143,12 @@ function App() {
         return React.createElement("div", { style: { minHeight: '100%', background: 'linear-gradient(180deg,#F5F0EB 0%,#FAF7F4 45%,#F5F0EB 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 } },
             React.createElement("div", { style: { width: '100%', maxWidth: 460 } },
                 React.createElement("div", { style: { textAlign: 'center', marginBottom: 14 } },
-                    React.createElement("img", { src: LOGO_URI, alt: 'Ödeme/Transfer', style: { width: 66, height: 66, borderRadius: 18, objectFit: 'cover', boxShadow: '0 12px 32px rgba(91,74,63,.18)', border: '1px solid rgba(196,149,106,.45)', marginBottom: 10 } }),
+                    React.createElement("img", { src: LOGO_URI, alt: 'Ödeme/Transfer', style: { width: 66, height: 66, borderRadius: 18, objectFit: 'cover', boxShadow: '0 12px 32px rgba(91,74,63,.18)', border: '1px solid rgba(176,141,87,.45)', marginBottom: 10 } }),
                     React.createElement("div", { style: { fontWeight: 900, fontSize: 24, color: NAV, letterSpacing: -.3 } }, 'Ödeme/Transfer Bilgileri'),
                     React.createElement("div", { style: { color: SB, fontSize: 13, marginTop: 4 } }, 'iPhone ve MacBook arasında güvenli otomatik senkron')
                 ),
                 React.createElement("div", { className: 'card', style: { padding: 20, borderRadius: 22, boxShadow: '0 16px 40px rgba(91,74,63,.10)' } },
-                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, padding: '12px 14px', borderRadius: 16, background: 'linear-gradient(135deg,rgba(91,74,63,.08),rgba(196,149,106,.10))', border: '1px solid rgba(91,74,63,.08)' } },
+                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, padding: '12px 14px', borderRadius: 16, background: 'linear-gradient(135deg,rgba(91,74,63,.08),rgba(176,141,87,.10))', border: '1px solid rgba(91,74,63,.08)' } },
                         React.createElement("div", null,
                             React.createElement("div", { style: { fontWeight: 800, color: NAV, fontSize: 15, marginBottom: 3 } }, 'Güvenli giriş'),
                             React.createElement("div", { style: { color: SB, fontSize: 12, lineHeight: 1.45 } }, 'Giriş yaptıktan sonra değişiklikler anında eşitlenir.')
@@ -2006,14 +2166,14 @@ function App() {
                         ),
                         React.createElement("div", { style: { color: SB, fontSize: 11 } }, rememberMe ? 'Oturum bu cihazda açık kalır' : 'Tarayıcı kapanınca tekrar giriş gerekir')
                     ),
-                    authError ? React.createElement("div", { style: { background: '#F9EFEE', color: '#B05A5A', border: '1px solid #D8B8B8', borderRadius: 12, padding: '11px 12px', fontSize: 12, marginBottom: 12, lineHeight: 1.45 } }, authError) : null,
+                    authError ? React.createElement("div", { style: { background: '#FEF2F2', color: '#B05A5A', border: '1px solid #D8B8B8', borderRadius: 12, padding: '11px 12px', fontSize: 12, marginBottom: 12, lineHeight: 1.45 } }, authError) : null,
                     React.createElement("button", { onClick: loginWithEmail, disabled: authBusy, style: { width: '100%', background: authBusy ? '#B8AFA8' : 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 14px', fontWeight: 900, fontSize: 15, boxShadow: authBusy ? 'none' : '0 8px 24px rgba(91,74,63,.18)' } }, authBusy ? 'Giriş yapılıyor...' : 'Güvenli Giriş Yap'),
                     React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 } },
-                        React.createElement("div", { style: { background: '#FAF7F4', border: '1px solid #E0E7F5', borderRadius: 14, padding: '10px 12px' } },
+                        React.createElement("div", { style: { background: '#F8FAFC', border: '1px solid #E0E7F5', borderRadius: 14, padding: '10px 12px' } },
                             React.createElement("div", { style: { fontSize: 11, color: SB, marginBottom: 3 } }, 'Yetki'),
                             React.createElement("div", { style: { fontSize: 12, color: NAV, fontWeight: 800 } }, 'E-posta / şifre girişi')
                         ),
-                        React.createElement("div", { style: { background: '#FAF7F4', border: '1px solid #E0E7F5', borderRadius: 14, padding: '10px 12px' } },
+                        React.createElement("div", { style: { background: '#F8FAFC', border: '1px solid #E0E7F5', borderRadius: 14, padding: '10px 12px' } },
                             React.createElement("div", { style: { fontSize: 11, color: SB, marginBottom: 3 } }, 'Senkron'),
                             React.createElement("div", { style: { fontSize: 12, color: NAV, fontWeight: 800 } }, 'Canlı bulut eşitleme')
                         )
@@ -2023,28 +2183,27 @@ function App() {
             )
         );
     }
-    return (React.createElement("div", { style: { minHeight: '100%', background: '#F5F0EB' } },
+    return (React.createElement("div", { style: { minHeight: '100%', background: '#F8FAFC' } },
         toast && React.createElement("div", { className: "toast" }, toast),
-        React.createElement("header", { className: "st", style: { background: 'linear-gradient(160deg,' + NAV + ' 0%,' + NAV2 + ' 60%,#2A1F18 100%)', boxShadow: '0 3px 24px rgba(61,46,36,.25)' } },
+        React.createElement("header", { className: "st", style: { background: 'linear-gradient(180deg,#0F2744 0%,#081A2E 100%)', boxShadow: '0 2px 20px rgba(8,26,46,.2)' } },
             React.createElement("div", { style: { padding: '10px 14px 0' } },
                 React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 } },
                     React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } },
-                        React.createElement("img", { src: LOGO_URI, style: { width: 40, height: 40, borderRadius: 10, objectFit: 'cover', border: '1px solid rgba(196,149,106,.4)', flexShrink: 0 }, alt: "\u00D6deme/Transfer" }),
                         React.createElement("div", null,
                             React.createElement("div", { style: { color: '#fff', fontWeight: 800, fontSize: 14, letterSpacing: -.2 } }, "\u00D6deme/Transfer Bilgileri"),
-                            React.createElement("div", { style: { color: 'rgba(196,149,106,.8)', fontSize: 9, fontWeight: 600, letterSpacing: .4, display: 'flex', alignItems: 'center', gap: 5 } },
+                            React.createElement("div", { style: { color: 'rgba(176,141,87,.8)', fontSize: 9, fontWeight: 600, letterSpacing: .4, display: 'flex', alignItems: 'center', gap: 5 } },
                                 React.createElement("span", null, T.length + " TRANSFER"),
-                                React.createElement("span", { style: { background: authUser ? '#5A8A6A' : '#C45A5A', color: '#fff', padding: '2px 6px', borderRadius: 4, fontSize: 9, fontWeight: 800 } }, authUser ? '☁ BAĞLI' : '☁ OFFLINE')))),
+                                React.createElement("span", { style: { background: authUser ? '#16794F' : '#B02828', color: '#fff', padding: '2px 6px', borderRadius: 4, fontSize: 9, fontWeight: 800 } }, authUser ? '☁ BAĞLI' : '☁ OFFLINE')))),
                     React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 5 } },
-                        React.createElement("span", { style: { background: 'rgba(196,149,106,.15)', color: GOLD, padding: '4px 8px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid rgba(196,149,106,.2)' } },
+                        React.createElement("span", { style: { background: 'rgba(176,141,87,.15)', color: GOLD, padding: '4px 8px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid rgba(176,141,87,.2)' } },
                             "$ ",
                             rates.USD),
-                        React.createElement("span", { style: { background: 'rgba(196,149,106,.15)', color: GOLD, padding: '4px 8px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid rgba(196,149,106,.2)' } },
+                        React.createElement("span", { style: { background: 'rgba(176,141,87,.15)', color: GOLD, padding: '4px 8px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid rgba(176,141,87,.2)' } },
                             "\u20AC ",
                             rates.EUR),
                         React.createElement("button", { onClick: () => setBkpM(true), style: { background: 'rgba(255,255,255,.1)', border: 'none', color: 'rgba(255,255,255,.8)', borderRadius: 8, padding: '5px 8px', fontSize: 14, lineHeight: 1 } }, "\uD83D\uDEE1\uFE0F"))),
                 React.createElement("div", { style: { display: 'flex', gap: 1, background: 'rgba(0,0,0,.2)', borderRadius: 12, padding: 3, marginBottom: 0 } }, [['new', '+ Yeni'], ['list', 'Transferler'], ['hesap', 'Hesap'], ['arac', '🚐 ' + PLAKA]].map(([id, lbl]) => (React.createElement("button", { key: id, onClick: () => setTab(id), style: { flex: 1, padding: '9px 2px', borderRadius: 9, border: 'none', background: tab === id ? GOLD : 'transparent', color: tab === id ? NAV2 : 'rgba(255,255,255,.55)', fontWeight: 700, cursor: 'pointer', fontSize: '10px', letterSpacing: .2, boxShadow: tab === id ? '0 1px 8px rgba(0,0,0,.2)' : 'none' } }, lbl)))))),
-        React.createElement("main", { style: { padding: '12px 12px 110px', maxWidth: 520, margin: '0 auto' } },
+        React.createElement("main", { className: "main-cont", style: { padding: '12px 12px 110px', maxWidth: 520, margin: '0 auto' } },
             tab === 'new' && (React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
                 React.createElement("div", { className: "card" },
                     React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginBottom: 12 } }, TIPLER.map(tp => { const a = form.transferType === tp.id; return (React.createElement("button", { key: tp.id, onClick: () => sf({ transferType: tp.id }), style: { background: a ? tp.bg : INP, color: a ? tp.c : SB, border: '1.5px solid ' + (a ? tp.b : BOR), borderRadius: 10, padding: '9px 3px', cursor: 'pointer', textAlign: 'center' } },
@@ -2090,7 +2249,7 @@ function App() {
                             setShowSg(p => ({ ...p, pickup: true })); }, onBlur: () => setTimeout(() => setShowSg(p => ({ ...p, pickup: false })), 180) }),
                     (form.extraStops || []).map((s, i) => (React.createElement("div", { key: i, style: { display: 'flex', gap: 6, alignItems: 'center' } },
                         React.createElement("input", { className: "inp", value: s, onChange: e => { const st = [...form.extraStops]; st[i] = e.target.value; sf({ extraStops: st }); }, placeholder: 'Ara Durak ' + (i + 1), style: { flex: 1 } }),
-                        React.createElement("button", { onClick: () => sf({ extraStops: form.extraStops.filter((_, j) => j !== i) }), style: { background: '#F9EFEE', color: R, border: 'none', borderRadius: 8, padding: '9px 11px', fontSize: 13, flexShrink: 0, cursor: 'pointer' } }, "\u2715")))),
+                        React.createElement("button", { onClick: () => sf({ extraStops: form.extraStops.filter((_, j) => j !== i) }), style: { background: '#FEF2F2', color: R, border: 'none', borderRadius: 8, padding: '9px 11px', fontSize: 13, flexShrink: 0, cursor: 'pointer' } }, "\u2715")))),
                     React.createElement("button", { onClick: () => sf({ extraStops: [...(form.extraStops || []), ''] }), style: { background: 'transparent', color: NAV, border: '1.5px dashed ' + BOR, borderRadius: 8, padding: '7px', fontWeight: 600, fontSize: 11, cursor: 'pointer' } }, "+ Ara Durak"),
                     React.createElement(LocIn, { field: "dropoff", lbl: "\uD83C\uDFAF B\u0131rak\u0131\u015F Noktas\u0131", value: form.dropoff, sugg: sugg.dropoff, show: showSg.dropoff, onChange: chL, onSel: selL, onFocus: () => { if (form.dropoff.length > 1)
                             setShowSg(p => ({ ...p, dropoff: true })); }, onBlur: () => setTimeout(() => setShowSg(p => ({ ...p, dropoff: false })), 180) }),
@@ -2100,7 +2259,7 @@ function App() {
                             r.ico,
                             React.createElement("br", null),
                             r.n))))),
-                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 11px', background: form.useMaps ? '#F2EDE8' : INP, borderRadius: 10, border: '1px solid ' + (form.useMaps ? BOR : BOR) } },
+                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 11px', background: form.useMaps ? '#F1F5F9' : INP, borderRadius: 10, border: '1px solid ' + (form.useMaps ? BOR : BOR) } },
                         React.createElement("div", null,
                             React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: TX } }, "\uD83D\uDDFA\uFE0F Google Maps Linki"),
                             React.createElement("div", { style: { fontSize: 10, color: SB } }, "Kaptan mesaj\u0131na konum linki ekle")),
@@ -2177,7 +2336,7 @@ function App() {
                         React.createElement("span", { className: "lbl" }, olAlan2 ? 'Bana Ödenecek Araç Ücreti (₺)' : 'Firmaya Araç Ücreti (₺)'),
                         React.createElement("input", { type: "number", value: form.driverPayment, onChange: e => sf({ driverPayment: e.target.value }), placeholder: "0", className: "inp" })),
                     (form.driverPayment || form.paymentAmount) && (React.createElement("div", { style: { marginTop: 10 } },
-                        borcFirma > 0 && (React.createElement("div", { style: { padding: '9px 12px', borderRadius: 10, background: '#F8F0E8', border: '1px solid #D4A880', marginBottom: 8 } },
+                        borcFirma > 0 && (React.createElement("div", { style: { padding: '9px 12px', borderRadius: 10, background: '#FFFBEB', border: '1px solid #D4A880', marginBottom: 8 } },
                             React.createElement("div", { style: { fontSize: 9, color: BR, fontWeight: 700, letterSpacing: .4, marginBottom: 1 } },
                                 (form.givenBy || 'FİRMA'),
                                 " YA VERECE\u011E\u0130N"),
@@ -2185,7 +2344,7 @@ function App() {
                                 "-",
                                 borcFirma.toFixed(0),
                                 " \u20BA"))),
-                        React.createElement("div", { style: { padding: '10px 12px', borderRadius: 10, background: fNet > 0 ? '#F0F5F1' : fNet === 0 ? INP : '#F9EFEE', border: '1px solid ' + (fNet > 0 ? '#B8CCBE' : fNet === 0 ? BOR : '#D8B8B8') } },
+                        React.createElement("div", { style: { padding: '10px 12px', borderRadius: 10, background: fNet > 0 ? '#ECFDF5' : fNet === 0 ? INP : '#FEF2F2', border: '1px solid ' + (fNet > 0 ? '#A7F3D0' : fNet === 0 ? BOR : '#FCA5A5') } },
                             React.createElement("div", { style: { fontSize: 9, color: SB, fontWeight: 700, letterSpacing: .4, marginBottom: 2 } }, "\u00D6LMEZTUR NET K\u00C2RI"),
                             React.createElement("div", { style: { fontSize: 22, fontWeight: 800, color: fNet > 0 ? G : fNet === 0 ? SB : R } },
                                 fNet >= 0 ? '+' : '',
@@ -2193,7 +2352,7 @@ function App() {
                                 " \u20BA"))))),
                 React.createElement("div", { className: "card" },
                     React.createElement("span", { className: "lbl", style: { marginBottom: 7 } }, "Sefer Durumu"),
-                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7, marginBottom: 10 } }, [['tam', '✅ Tam', G, '#F0F5F1'], ['bos', '🔄 Boş', O, '#F8F2E8'], ['iptal', '❌ İptal', R, '#F9EFEE']].map(([id, lbl, ac, bg]) => (React.createElement("button", { key: id, onClick: () => sf({ status: id }), style: { background: form.status === id ? ac : INP, color: form.status === id ? ac === '#F0F5F1' ? G : ac === '#F8F2E8' ? O : R : SB, border: '1.5px solid ' + (form.status === id ? (ac === '#F0F5F1' ? '#B8CCBE' : ac === '#F8F2E8' ? '#C4A870' : '#D8B8B8') : BOR), borderRadius: 9, padding: '10px 3px', cursor: 'pointer', fontSize: '12px', fontWeight: 700 } }, lbl)))),
+                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7, marginBottom: 10 } }, [['tam', '✅ Tam', G, '#ECFDF5'], ['bos', '🔄 Boş', O, '#FEF3C7'], ['iptal', '❌ İptal', R, '#FEF2F2']].map(([id, lbl, ac, bg]) => (React.createElement("button", { key: id, onClick: () => sf({ status: id }), style: { background: form.status === id ? ac : INP, color: form.status === id ? ac === '#ECFDF5' ? G : ac === '#FEF3C7' ? O : R : SB, border: '1.5px solid ' + (form.status === id ? (ac === '#ECFDF5' ? '#A7F3D0' : ac === '#FEF3C7' ? '#C4A870' : '#FCA5A5') : BOR), borderRadius: 9, padding: '10px 3px', cursor: 'pointer', fontSize: '12px', fontWeight: 700 } }, lbl)))),
                     React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '8px 11px', background: INP, borderRadius: 9, border: '1px solid ' + BOR } },
                         React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: TX } }, "\uD83E\uDE91 \u00C7ocuk Koltu\u011Fu"),
                         React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
@@ -2205,13 +2364,13 @@ function App() {
                 React.createElement("div", { className: "card", style: { display: 'flex', flexDirection: 'column', gap: 7 } },
                     React.createElement("input", { value: flt.search, onChange: e => setFlt(p => ({ ...p, search: e.target.value })), placeholder: "\uD83D\uDD0D  Ara...", className: "inp", style: { fontSize: '14px' } }),
                     React.createElement("div", { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } }, [['all', 'Tümü'], ['tam', '✅ Tam'], ['bos', '🔄 Boş'], ['iptal', '❌ İptal']].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, status: v })), style: { background: flt.status === v ? NAV : INP, color: flt.status === v ? '#fff' : SB, border: 'none', borderRadius: 7, padding: '6px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' } }, l)))),
-                    React.createElement("div", { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } }, [['all', 'Tüm transferler'], ['plate16', '🚐 ' + PLAKA]].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, plateView: v })), style: { background: flt.plateView === v ? '#FBF5EE' : INP, color: flt.plateView === v ? NAV2 : SB, border: '1px solid ' + (flt.plateView === v ? '#E8D8C8' : 'transparent'), borderRadius: 7, padding: '6px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' } }, l)))),
-                    flt.plateView !== 'plate16' && React.createElement("div", { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } }, [['all', 'Tahsil: Tümü'], ['collected', '✓ Alınmış'], ['uncollected', '⏳ Alınmamış']].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, collect: v })), style: { background: flt.collect === v ? NAV2 : INP, color: flt.collect === v ? GOLD : SB, border: flt.collect === v ? '1px solid rgba(196,149,106,.35)' : '1px solid transparent', borderRadius: 7, padding: '6px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' } }, l))))),
+                    React.createElement("div", { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } }, [['all', 'Tüm transferler'], ['plate16', '🚐 ' + PLAKA]].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, plateView: v })), style: { background: flt.plateView === v ? '#FEF3C7' : INP, color: flt.plateView === v ? NAV2 : SB, border: '1px solid ' + (flt.plateView === v ? '#FDE68A' : 'transparent'), borderRadius: 7, padding: '6px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' } }, l)))),
+                    flt.plateView !== 'plate16' && React.createElement("div", { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } }, [['all', 'Tahsil: Tümü'], ['collected', '✓ Alınmış'], ['uncollected', '⏳ Alınmamış']].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, collect: v })), style: { background: flt.collect === v ? NAV2 : INP, color: flt.collect === v ? GOLD : SB, border: flt.collect === v ? '1px solid rgba(176,141,87,.35)' : '1px solid transparent', borderRadius: 7, padding: '6px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' } }, l))))),
                     flt.plateView === 'plate16' && React.createElement(React.Fragment, null,
                         React.createElement("div", { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } }, [['all', '16 LMZ 55: Tümü'], ['collected', '✓ 16 LMZ 55 Alınmış'], ['uncollected', '⏳ 16 LMZ 55 Alınmamış']].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, plateCollect: v })), style: { background: flt.plateCollect === v ? '#5B4A3F' : INP, color: flt.plateCollect === v ? '#fff' : SB, border: flt.plateCollect === v ? '1px solid #5B4A3F' : '1px solid transparent', borderRadius: 7, padding: '6px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' } }, l)))),
                         React.createElement("div", { style: { background: '#F5F0EB', color: NAV2, border: '1px solid #E0D4C8', borderRadius: 8, padding: '8px 10px', fontSize: 11, fontWeight: 700 } }, '16 LMZ 55 için sadece plaka alanına 16 LMZ 55 yazılan kayıtlar burada görünür. Şoföre göre eşleşme yapılmaz. Alınmış/alınmamış durumu sadece karttaki Müşteri ücreti alındı butonuna göre belirlenir.')),
                 React.createElement("div", { className: "card" },
-                    listIsPlate16 && React.createElement("div", { style: { marginBottom: 8, padding: '8px 10px', borderRadius: 10, background: '#FBF5EE', border: '1px solid #F1DFC0', color: NAV2, fontSize: 11, fontWeight: 800 } }, "🚐 " + PLAKA + " transferleri gösteriliyor"),
+                    listIsPlate16 && React.createElement("div", { style: { marginBottom: 8, padding: '8px 10px', borderRadius: 10, background: '#FEF3C7', border: '1px solid #F1DFC0', color: NAV2, fontSize: 11, fontWeight: 800 } }, "🚐 " + PLAKA + " transferleri gösteriliyor"),
                     React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 } },
                         React.createElement("span", { style: { fontWeight: 700, fontSize: 12, color: TX } },
                             listIsPlate16 ? (PLAKA + " — " + visibleListRows.length + " transfer") : ("Bu Ay — " + listMiniStats.mC + " transfer")),
@@ -2222,7 +2381,7 @@ function App() {
                     showSt && (React.createElement("div", { style: { marginTop: 10, paddingTop: 10, borderTop: '1px solid ' + BOR } }, [['Geçen ay dış iş neti', st.lP.toLocaleString('tr-TR') + '₺', TX], ['Bu ay Ölmeztur dış iş neti', st.monthExternalNet.toLocaleString('tr-TR') + '₺', TX], ['Bu ay 16 LMZ 55 neti', st.monthPlate16Net.toLocaleString('tr-TR') + '₺', G], ['2026 toplam net', st.yP.toLocaleString('tr-TR') + '₺', G], ['İptal', st.ipt, R]].map(([l, v, col]) => (React.createElement("div", { key: l, style: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 } },
                         React.createElement("span", { style: { fontSize: 11, color: SB } }, l),
                         React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: col } }, v)))),
-                        st.ym.length > 0 && React.createElement("div", { style: { marginTop: 8, background: '#FAF7F4', borderRadius: 10, padding: '8px 10px' } },
+                        st.ym.length > 0 && React.createElement("div", { style: { marginTop: 8, background: '#F8FAFC', borderRadius: 10, padding: '8px 10px' } },
                             React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: NAV, marginBottom: 6 } }, st.yr + ' AY AY NET KAZANÇ (Ölmeztur dış iş + 16 LMZ 55)'),
                             st.ym.map(m => React.createElement("div", { key: m.key, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 } },
                                 React.createElement("span", { style: { fontSize: 11, color: SB, textTransform: 'capitalize' } }, m.label + ' (' + m.count + ')'),
@@ -2239,7 +2398,7 @@ function App() {
                 React.createElement("div", { className: "card" }, React.createElement("div", { style: { fontWeight: 800, fontSize: 14, color: TX, marginBottom: 10 } }, "👨🏻‍✈️ Kaptanlar"), React.createElement("div", { style: { display: 'flex', gap: 8, marginBottom: 10 } }, React.createElement("input", { value: newDriverContact.name, onChange: e => setNewDriverContact(p => ({ ...p, name: e.target.value })), placeholder: "Kaptan adı", className: "inp", style: { flex: 1 } }), React.createElement("input", { value: newDriverContact.phone, onChange: e => setNewDriverContact(p => ({ ...p, phone: e.target.value })), placeholder: "Telefon", className: "inp", style: { width: 130, flex: 'none' } }), React.createElement("button", { onClick: () => { addDriverContact(newDriverContact.name, newDriverContact.phone); setNewDriverContact({ name: '', phone: '' }); }, style: { background: G, color: '#fff', border: 'none', borderRadius: 10, padding: '0 14px', fontWeight: 800, cursor: 'pointer' } }, "+")), React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, drivers.map((d, i) => React.createElement("div", { key: i, style: { display: 'flex', alignItems: 'center', gap: 8, padding: 10, border: '1px solid ' + BOR, borderRadius: 12, background: INP } }, React.createElement("div", { style: { flex: 1 } }, React.createElement("div", { style: { fontWeight: 700, fontSize: 13, color: TX } }, d.name), React.createElement("div", { style: { fontSize: 11, color: SB } }, d.phone || 'Numara yok')), React.createElement("button", { onClick: () => { const nn = prompt('Kaptan adı', d.name) || d.name; const pp = prompt('Telefon', d.phone || '') || ''; if (nn) setDrivers(p => [...p.filter(x => x.name !== d.name && x.name !== nn), { name: nn, phone: pp }]); }, style: { background: NAV, color: '#fff', border: 'none', borderRadius: 9, padding: '8px 10px', fontWeight: 800, cursor: 'pointer' } }, 'Düzenle'), React.createElement("button", { onClick: () => { if (window.confirm(d.name + ' silinsin mi?')) setDrivers(p => p.filter(x => x.name !== d.name)); }, style: { background: R, color: '#fff', border: 'none', borderRadius: 9, padding: '8px 10px', fontWeight: 800, cursor: 'pointer' } }, 'Sil'))))))),
             tab === 'hesap' && React.createElement(React.Fragment, null, React.createElement(HesapTab, { T: T, sT: setT, agencies: agencies, tip: tip }), React.createElement(HesapExtras, { agencies: agencies, setAgencies: setAgencies, agencyPhones: agencyPhones, setAgencyPhones: setAgencyPhones, drivers: drivers, setDrivers: setDrivers, debts: debts, setDebts: setDebts, tip: tip })),
             tab === 'arac' && React.createElement(AracTab, { tip: tip, aracK: aracK, setAracK: setAracK })),
-        React.createElement("div", { className: "sb", style: { position: 'fixed', bottom: 0, left: 0, right: 0, background: NAV2, borderTop: '1px solid rgba(196,149,106,.2)', boxShadow: '0 -2px 20px rgba(61,46,36,.3)' } },
+        React.createElement("div", { className: "sb", style: { position: 'fixed', bottom: 0, left: 0, right: 0, background: NAV2, borderTop: '1px solid rgba(176,141,87,.2)', boxShadow: '0 -2px 20px rgba(61,46,36,.3)' } },
             React.createElement("div", { style: { maxWidth: 520, margin: '0 auto', padding: '8px 14px 4px' } },
                 React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 4 } },
                     [[T.length, 'TOPLAM', '#fff'], [st.tam, 'TAM', '#8AC4A0'], [st.bos, 'BOŞ', GOLD], [st.ipt, 'İPTAL', '#C89090']].map(([v, l, col]) => (React.createElement("div", { key: l, style: { flex: 1, textAlign: 'center' } },
@@ -2247,7 +2406,7 @@ function App() {
                         React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.35)', fontWeight: 700, letterSpacing: .4, marginTop: 1 } }, l)))),
                     React.createElement("div", { style: { width: 1, height: 28, background: 'rgba(255,255,255,.1)', flexShrink: 0 } }),
                     React.createElement("div", { style: { flex: 2, textAlign: 'right' } },
-                        React.createElement("div", { style: { fontSize: 9, color: 'rgba(196,149,106,.7)', fontWeight: 700, letterSpacing: .3, marginBottom: 1 } },
+                        React.createElement("div", { style: { fontSize: 9, color: 'rgba(176,141,87,.7)', fontWeight: 700, letterSpacing: .3, marginBottom: 1 } },
                             "BU AY / ",
                             st.yr,
                             " NET"),
@@ -2269,27 +2428,27 @@ function App() {
                     ? React.createElement("textarea", { value: msgM.txt || '', onChange: e => setMsgM(m => ({ ...m, txt: e.target.value })), style: { width: '100%', minHeight: msgM.tp === 'bos' ? 140 : 240, background: '#fff', borderRadius: 12, padding: 12, marginBottom: 12, border: '1px solid ' + BOR, resize: 'vertical', fontSize: 13, color: TX, lineHeight: 1.6, fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif' } })
                     : React.createElement("div", { style: { background: INP, borderRadius: 12, padding: 12, marginBottom: 12, border: '1px solid ' + BOR, maxHeight: '50vh', overflowY: 'auto' } },
                         React.createElement("pre", { style: { whiteSpace: 'pre-wrap', fontSize: 12, color: TX, fontFamily: '-apple-system,monospace', lineHeight: 1.6, margin: 0 } }, activeMsg)),
-                msgM.tp === 'cus' && (React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: '#F5F2EE', border: '1px solid ' + BOR, borderRadius: 12, padding: '10px 12px', marginBottom: 12 } },
+                msgM.tp === 'cus' && (React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: '#F1F5F9', border: '1px solid ' + BOR, borderRadius: 12, padding: '10px 12px', marginBottom: 12 } },
                     React.createElement("div", null,
                         React.createElement("div", { style: { fontWeight: 800, fontSize: 12, color: NAV } }, "🌐 Misafir mesaj dili"),
                         React.createElement("div", { style: { fontSize: 10, color: SB } }, "Mesajı Türkçe, English veya العربية olarak gönderebilirsin.")),
                     React.createElement("div", { style: { display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' } },
                         [['tr','Türkçe'],['en','English'],['ar','العربية']].map(([lc,lb]) => React.createElement("button", { key: lc, onClick: () => setMsgM(m => ({ ...m, lang: lc })), style: { background: (msgM.lang || 'tr') === lc ? NAV : '#fff', color: (msgM.lang || 'tr') === lc ? '#fff' : NAV, border: '1px solid ' + ((msgM.lang || 'tr') === lc ? NAV : BOR), borderRadius: 999, padding: '8px 10px', fontWeight: 800, fontSize: '11px', cursor: 'pointer' } }, lb))))),
-                msgM.tp === 'drv' && (React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: '#F0F5F1', border: '1px solid #CFE8D9', borderRadius: 12, padding: '10px 12px', marginBottom: 12 } },
+                msgM.tp === 'drv' && (React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: '#ECFDF5', border: '1px solid #CFE8D9', borderRadius: 12, padding: '10px 12px', marginBottom: 12 } },
                     React.createElement("div", null,
                         React.createElement("div", { style: { fontWeight: 800, fontSize: 12, color: G } }, "🗺️ Google Maps olsun mu?"),
                         React.createElement("div", { style: { fontSize: 10, color: SB } }, "Kaptana giden mesaja konum linklerini burada ekleyip kaldırabilirsin.")),
                     React.createElement("button", { onClick: () => setMsgM(m => ({ ...m, withMaps: !m.withMaps })), style: { minWidth: 82, background: msgM.withMaps ? G : '#fff', color: msgM.withMaps ? '#fff' : NAV, border: '1px solid ' + (msgM.withMaps ? G : BOR), borderRadius: 999, padding: '9px 12px', fontWeight: 800, fontSize: '11px', cursor: 'pointer' } }, msgM.withMaps ? 'Olsun' : 'Olmasın'))),
                 React.createElement("div", { style: { display: 'flex', gap: 8, marginBottom: 18 } },
                     React.createElement("button", { onClick: () => cpTxt(activeMsg), style: { flex: 1, background: 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', color: '#fff', border: 'none', borderRadius: 13, padding: 13, fontWeight: 800, fontSize: '14px', cursor: 'pointer' } }, "\uD83D\uDCCB Kopyala"),
-                    ((msgM.tp === 'drv' && msgM.t?.driverPhone) || (msgM.tp === 'cus' && msgM.t?.passengers && msgM.t.passengers[0] && msgM.t.passengers[0].phone)) && (React.createElement("button", { onClick: () => { const raw = msgM.tp === 'drv' ? msgM.t.driverPhone : ((msgM.t.passengers && msgM.t.passengers[0] && msgM.t.passengers[0].phone) || ''); const cl = String(raw || '').replace(/\D/g, ''); const n = cl.startsWith('0') ? '90' + cl.slice(1) : cl.startsWith('90') ? cl : '90' + cl; if (n) window.open('https://wa.me/' + n + '?text=' + encodeURIComponent(activeMsg), '_blank'); }, style: { background: '#5A8A6A', color: '#fff', border: 'none', borderRadius: 13, padding: '13px 16px', fontWeight: 800, fontSize: '13px', cursor: 'pointer' } }, "WA")))))),
+                    ((msgM.tp === 'drv' && msgM.t?.driverPhone) || (msgM.tp === 'cus' && msgM.t?.passengers && msgM.t.passengers[0] && msgM.t.passengers[0].phone)) && (React.createElement("button", { onClick: () => { const raw = msgM.tp === 'drv' ? msgM.t.driverPhone : ((msgM.t.passengers && msgM.t.passengers[0] && msgM.t.passengers[0].phone) || ''); const cl = String(raw || '').replace(/\D/g, ''); const n = cl.startsWith('0') ? '90' + cl.slice(1) : cl.startsWith('90') ? cl : '90' + cl; if (n) window.open('https://wa.me/' + n + '?text=' + encodeURIComponent(activeMsg), '_blank'); }, style: { background: '#16794F', color: '#fff', border: 'none', borderRadius: 13, padding: '13px 16px', fontWeight: 800, fontSize: '13px', cursor: 'pointer' } }, "WA")))))),
         bkpM && (React.createElement("div", { className: "mo", onClick: () => setBkpM(false) },
             React.createElement("div", { className: "ms", onClick: e => e.stopPropagation(), style: { paddingBottom: 30 } },
                 React.createElement("div", { style: { width: 40, height: 4, background: BOR, borderRadius: 3, margin: '0 auto 14px' } }),
                 React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 } },
                     React.createElement("div", { style: { fontWeight: 800, fontSize: 16, color: TX } }, "\uD83D\uDEE1\uFE0F Veri Yedekleme"),
                     React.createElement("button", { onClick: () => setBkpM(false), style: { background: INP, border: 'none', borderRadius: 16, width: 30, height: 30, cursor: 'pointer', fontSize: 14 } }, "\u2715")),
-                React.createElement("div", { style: { background: '#F0F5F1', border: '1px solid #A8D4B8', borderRadius: 14, padding: 14, marginBottom: 12 } },
+                React.createElement("div", { style: { background: '#ECFDF5', border: '1px solid #A8D4B8', borderRadius: 14, padding: 14, marginBottom: 12 } },
                     React.createElement("div", { style: { fontWeight: 800, fontSize: 13, color: G, marginBottom: 6 } }, "\uD83D\uDCE4 Yede\u011Fi Kopyala"),
                     React.createElement("div", { style: { fontSize: 11, color: G, marginBottom: 8 } }, "JSON direkt panoya kopyalan\u0131r. MacBook veya iPhone\u2019da uygulamay\u0131 a\u00E7\u0131p \u201CPanodakini Y\u00FCkle\u201D demen yeterli."),
                     React.createElement("button", { onClick: doBackup, style: { width: '100%', background: G, color: '#fff', border: 'none', borderRadius: 12, padding: '12px', fontWeight: 800, fontSize: '14px', cursor: 'pointer', marginBottom: 8 } },
