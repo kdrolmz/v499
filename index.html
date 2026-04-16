@@ -252,6 +252,22 @@ const fn = n => (n >= 0 ? '+' : '') + Math.round(n).toLocaleString('tr-TR');
 const nm = v => (v || '').toLowerCase().replace(/[ıİ]/g, 'i').replace(/[ğĞ]/g, 'g').replace(/[üÜ]/g, 'u').replace(/[şŞ]/g, 's').replace(/[öÖ]/g, 'o').replace(/[çÇ]/g, 'c');
 const np = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const uniq = arr => Array.from(new Set((arr || []).filter(Boolean)));
+const shortLoc = name => {
+    if (!name) return '—';
+    const n = String(name);
+    if (/İstanbul Havalimanı/i.test(n)) return 'İHL';
+    if (/Sabiha Gökçen/i.test(n)) return 'SAW';
+    if (/Ankara Esenboğa/i.test(n)) return 'ESB';
+    if (/İzmir Adnan/i.test(n)) return 'ADB';
+    if (/Antalya Havalimanı/i.test(n)) return 'AYT';
+    if (/Dalaman/i.test(n)) return 'DLM';
+    if (/Bodrum Milas/i.test(n)) return 'BJV';
+    if (/Trabzon Havalimanı/i.test(n)) return 'TZX';
+    if (/Bursa Yenişehir/i.test(n)) return 'BTZ';
+    const slash = n.match(/^([A-ZÇĞİÖŞÜa-zçğıöşü]+)\s*\//);
+    if (slash) return slash[1];
+    return n.split('(')[0].trim();
+};
 const transferIdentity = t => {
     if (!t) return '';
     if (t.id)
@@ -900,78 +916,14 @@ function HesapTab({ T, sT, agencies, tip }) {
     };
     const excelExport = firm => {
         const { ts, al, ver, net } = ozet(firm);
-        const sorted = ts.slice().sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1);
-        // Split into 3 categories based on origin
-        const benimVerdiklerim = sorted.filter(t => t.yon === 'benVerdim');
-        const onunVerdikleri   = sorted.filter(t => t.yon === 'oVerdi');
-        const altKayitlar      = sorted.filter(t => t.yon === 'alt');
-        // Also group by altAcenta (third-party chain)
-        const chainMap = {};
-        sorted.forEach(t => {
-            if (t.altAcenta && t.altAcenta !== OL && t.altAcenta !== firm) {
-                (chainMap[t.altAcenta] = chainMap[t.altAcenta] || []).push(t);
-            }
-        });
-        const tableHeaders = ['Tarih', 'Saat', 'Güzergah', 'Müşteri ₺', 'Araç ₺', 'Alt ₺', 'Net (₺)', 'Durum'];
-        const row2arr = t => [
-            t.date || '',
-            t.time || '',
-            (t.pickup || '—') + ' → ' + (t.dropoff || '—'),
-            Math.round(parseFloat(t.customerTRY || t.paymentAmount) || 0),
-            Math.round(parseFloat(t.driverPayment) || 0),
-            Math.round(parseFloat(t.altAcentaUcreti) || 0),
-            Math.round(parseFloat(t.netOl) || 0),
-            t.firmSettled ? 'KAPALI' : 'AÇIK'
-        ];
-        const sumNet = list => Math.round((list || []).reduce((s, t) => s + (parseFloat(t.netOl) || 0), 0));
-        const buildSheet = () => {
-            const rows = [];
-            rows.push(['ÖLMEZTUR TURİZM']);
-            rows.push([firm + ' · ' + new Date().toLocaleDateString('tr-TR')]);
-            rows.push([]);
-            // Table 1 — Onun verdiği
-            rows.push([firm + ' verdiği işler (' + onunVerdikleri.length + ')']);
-            rows.push(tableHeaders);
-            onunVerdikleri.forEach(t => rows.push(row2arr(t)));
-            rows.push(['', '', '', '', '', 'Ara Toplam Net:', sumNet(onunVerdikleri), '']);
-            rows.push([]);
-            // Table 2 — Benim verdiğim
-            rows.push(['Ölmeztur verdiği işler (' + benimVerdiklerim.length + ')']);
-            rows.push(tableHeaders);
-            benimVerdiklerim.forEach(t => rows.push(row2arr(t)));
-            rows.push(['', '', '', '', '', 'Ara Toplam Net:', sumNet(benimVerdiklerim), '']);
-            rows.push([]);
-            // Table 3+ — Zincir kaynaklı (altAcenta) üçüncü parti grupları
-            Object.keys(chainMap).forEach(src => {
-                rows.push([src + ' verdiği işler (' + firm + ' üzerinden) (' + chainMap[src].length + ')']);
-                rows.push(tableHeaders);
-                chainMap[src].forEach(t => rows.push(row2arr(t)));
-                rows.push(['', '', '', '', '', 'Ara Toplam Net:', sumNet(chainMap[src]), '']);
-                rows.push([]);
-            });
-            // Alt acenta direct records (if this firm IS the altAcenta in some transfers)
-            if (altKayitlar.length){
-                rows.push(['Alt acenta işleri (' + altKayitlar.length + ')']);
-                rows.push(tableHeaders);
-                altKayitlar.forEach(t => rows.push(row2arr(t)));
-                rows.push(['', '', '', '', '', 'Ara Toplam Net:', sumNet(altKayitlar), '']);
-                rows.push([]);
-            }
-            // Grand total
-            rows.push([]);
-            rows.push(['═══ GENEL TOPLAM ═══']);
-            rows.push(['Toplam Alacak (₺)', Math.round(al)]);
-            rows.push(['Toplam Verecek (₺)', Math.round(ver)]);
-            rows.push(['GENEL KALAN (Net ₺)', Math.round(net)]);
-            rows.push([(net >= 0 ? 'ÖLMEZTUR ALACAKLI' : 'ÖLMEZTUR VERECEKLİ'), Math.round(Math.abs(net))]);
-            return rows;
-        };
-        const ws = XLSX.utils.aoa_to_sheet(buildSheet());
-        ws['!cols'] = [{wch: 12}, {wch: 7}, {wch: 38}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 10}];
+        const ozRow = [['Firma', firm], ['Tarih', new Date().toLocaleDateString('tr-TR')], ['Toplam Transfer', ts.length], ['Alacak (₺)', Math.round(al)], ['Verecek (₺)', Math.round(ver)], ['Net (₺)', Math.round(net)]];
+        const trRows = ts.slice().sort((a, b) => a.date < b.date ? -1 : 1).map((t, i) => ({ 'No': i + 1, 'Tarih': t.date, 'Saat': t.time, 'Alış': t.pickup || '', 'Bırakış': t.dropoff || '', 'Müşteri': t.paymentCollect === 'yes' ? (parseFloat(t.paymentAmount) || 0) : 0, 'Döviz': t.paymentCurrency || 'TRY', 'Araç (₺)': parseFloat(t.driverPayment) || 0, 'Durum': t.status === 'tam' ? 'Tam' : 'Boş', 'Hesap': t.firmSettled ? 'Kapandı' : 'Açık' }));
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Hesap');
-        downloadWorkbook(wb, 'Hesap_' + firm.replace(/[^a-zA-Z0-9]/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.xlsx');
-        tip('Excel indirildi');
+        const s1 = XLSX.utils.aoa_to_sheet(ozRow);
+        XLSX.utils.book_append_sheet(wb, s1, 'Özet');
+        const s2 = XLSX.utils.json_to_sheet(trRows);
+        XLSX.utils.book_append_sheet(wb, s2, 'Transferler');
+        downloadWorkbook(wb, 'Olmeztur_' + firm.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.xlsx').then(ok => tip(ok ? (IS_IOS ? 'Excel paylaşıma hazır' : 'Excel indirildi!') : 'Excel oluşturulamadı'));
     };
 
     const sortHesapTs = (a, b) => {
@@ -1070,112 +1022,79 @@ function HesapTab({ T, sT, agencies, tip }) {
             ? React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 7 } }, liste.map(renderHesapKart))
             : React.createElement("div", { style: { textAlign: 'center', padding: '14px', color: SB, fontSize: 12, background: INP, borderRadius: 10, border: '1px dashed ' + BOR } }, 'Kayıt yok'));
 
-    if (sel) {
-        const { ts, al, ver, net } = ozet(sel);
-        const mts = ts.filter(t => t.date && t.date.startsWith(ay));
-        const mAl = Math.round(mts.filter(t => !t.firmSettled && t.netOl > 0).reduce((s, t) => s + t.netOl, 0));
-        const mVer = Math.round(mts.filter(t => !t.firmSettled && t.netOl < 0).reduce((s, t) => s + Math.abs(t.netOl), 0));
-        const sirali = ts.slice().sort(sortHesapTs);
-        const onunVerdikleri = sirali.filter(t => t.yon === 'oVerdi');
-        const benimVerdiklerim = sirali.filter(t => t.yon === 'benVerdim');
-        const altKayitlar = sirali.filter(t => t.yon === 'alt');
-        return (React.createElement(React.Fragment, null,
-            React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
-                React.createElement("button", { onClick: () => { setDetayT(null); setSel(null); }, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 12, padding: '10px 14px', color: TX, fontWeight: 700, fontSize: 13, cursor: 'pointer', textAlign: 'left' } }, "← Geri"),
-                React.createElement("div", { className: "card" },
-                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 } },
-                        React.createElement("div", { style: { width: 44, height: 44, borderRadius: 13, background: 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 } }, "🏢"),
-                        React.createElement("div", null,
-                            React.createElement("div", { style: { fontWeight: 800, fontSize: 16, color: TX } }, sel),
-                            React.createElement("div", { style: { fontSize: 11, color: SB } }, ts.length, " kayıt"))),
-                    React.createElement("div", { style: { background: net >= 0 ? '#E8F5ED' : '#F8EBEB', border: '1px solid ' + (net >= 0 ? '#A8D5B5' : '#D8A0A0'), borderRadius: 12, padding: '12px', marginBottom: 10, textAlign: 'center' } },
-                        React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: net >= 0 ? G : R, marginBottom: 3 } }, net >= 0 ? 'ÖLMEZTUR ALACAKLI' : 'ÖLMEZTUR VERECEKLİ'),
-                        React.createElement("div", { style: { fontSize: 26, fontWeight: 800, color: net >= 0 ? G : R } }, fr(Math.abs(net)), " ₺")),
-                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 } },
-                        React.createElement("div", { style: { background: '#E8F5ED', borderRadius: 10, padding: '9px', textAlign: 'center' } },
-                            React.createElement("div", { style: { fontSize: 9, fontWeight: 700, color: G, marginBottom: 2 } }, "ALACAK"),
-                            React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: G } }, fr(al), " ₺")),
-                        React.createElement("div", { style: { background: '#FDF8ED', borderRadius: 10, padding: '9px', textAlign: 'center' } },
-                            React.createElement("div", { style: { fontSize: 9, fontWeight: 700, color: BR, marginBottom: 2 } }, "VERECEK"),
-                            React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: BR } }, fr(ver), " ₺")))),
-                React.createElement("div", { className: "card" },
-                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 } },
-                        React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: TX } }, "Aylık"),
-                        React.createElement("input", { type: "month", value: ay, onChange: e => setAy(e.target.value), style: { marginLeft: 'auto', background: INP, border: '1px solid ' + BOR, borderRadius: 9, padding: '5px 9px', color: TX, fontSize: 13 } })),
-                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7 } }, [[mts.length, 'Transfer', NAV], [fr(mAl) + '₺', 'Alacak', G], [fr(mVer) + '₺', 'Verecek', BR]].map(([v, l, col]) => (React.createElement("div", { key: l, style: { background: INP, borderRadius: 10, padding: '8px 4px', textAlign: 'center' } },
-                        React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: col } }, v),
-                        React.createElement("div", { style: { fontSize: 9, color: SB, marginTop: 1 } }, l)))))),
-                React.createElement("div", { className: "card" },
-                    React.createElement("div", { style: { fontWeight: 700, fontSize: 13, color: TX, marginBottom: 10 } }, "Transferler"),
-                    React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 12 } },
-                        renderHesapBolum(sel + ' verdiği işler', onunVerdikleri, NAV),
-                        renderHesapBolum('Ölmeztur\'un verdiği işler', benimVerdiklerim, BR),
-                        (function(){
-                            // Group altKayitlar and main list by altAcenta source when the chain goes through `sel`
-                            const chainMap = {};
-                            ts.forEach(t => {
-                                if (t.altAcenta && t.altAcenta !== OL && t.altAcenta !== sel) {
-                                    (chainMap[t.altAcenta] = chainMap[t.altAcenta] || []).push(t);
-                                }
-                            });
-                            const chainKeys = Object.keys(chainMap);
-                            return chainKeys.map(src => renderHesapBolum(src + '\'nun verdiği işler (' + sel + ' üzerinden)', chainMap[src], O));
-                        })(),
-                        altKayitlar.length > 0 && renderHesapBolum('Alt acenta işleri', altKayitlar, O))),
-                React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7 } },
-                    React.createElement("button", { onClick: () => { copyText(sirketMsg(sel)); tip('Kopyalandı!'); }, style: { background: G, color: '#fff', border: 'none', borderRadius: 13, padding: '11px 4px', fontWeight: 700, fontSize: '11px', cursor: 'pointer', lineHeight: 1.5 } },
-                        "📤 Şirkete",
-                        React.createElement("br", null),
-                        "Kopyala"),
-                    React.createElement("button", { onClick: () => excelExport(sel), style: { background: '#16794F', color: '#fff', border: 'none', borderRadius: 13, padding: '11px 4px', fontWeight: 700, fontSize: '11px', cursor: 'pointer', lineHeight: 1.5 } },
-                        "📊 Excel",
-                        React.createElement("br", null),
-                        "İndir"),
-                    React.createElement("button", { onClick: () => {
-                            const { ts, al, ver, net } = ozet(sel);
-                            const rows = ts.slice().sort((a, b) => a.date < b.date ? -1 : 1).map((t, i) => { const kar = transferNetAmount({ ...t }); return (i + 1) + '. ' + t.date + ' ' + t.time + ' | ' + (t.pickup || '—') + ' → ' + (t.dropoff || '—') + '\n   Araç:' + fr(t.driverPayment) + '₺ Kâr:' + (kar >= 0 ? '+' : '') + fr(kar) + '₺ ' + (t.firmSettled ? '[KAPALI]' : '[AÇIK]'); }).join('\n\n');
-                            copyText('KENDİ HESABIM — ' + sel + '\nAlacak:' + fr(al) + '₺ Verecek:' + fr(ver) + '₺ Net:' + (net >= 0 ? '+' : '') + fr(net) + '₺\n' + '─'.repeat(24) + '\n\n' + rows);
-                            tip('Kopyalandı!');
-                        }, style: { background: 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', color: '#fff', border: 'none', borderRadius: 13, padding: '11px 4px', fontWeight: 700, fontSize: '11px', cursor: 'pointer', lineHeight: 1.5 } },
-                        "📋 Kendi",
-                        React.createElement("br", null),
-                        "Hesabım"))),
-            renderHesapDetayModal()));
-    }
 
-    const gAl = Math.round(filtered.reduce((s, f) => s + ozet(f).al, 0));
-    const gVer = Math.round(filtered.reduce((s, f) => s + ozet(f).ver, 0));
-    return (React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
-        React.createElement("div", { className: "card" },
-            React.createElement("input", { value: ara, onChange: e => setAra(e.target.value), placeholder: "\uD83D\uDD0D  Firma ara...", className: "inp", style: { fontSize: '14px' } })),
-        React.createElement("div", { className: "card" },
-            React.createElement("div", { style: { fontWeight: 700, fontSize: 13, color: TX, marginBottom: 10 } }, "Genel Bak\u0131\u015F"),
-            React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 } }, [[filtered.length, 'Firma', NAV], [fr(gAl) + '₺', 'Alacak', G], [fr(gVer) + '₺', 'Verecek', BR]].map(([v, l, col]) => (React.createElement("div", { key: l, style: { background: INP, borderRadius: 10, padding: '9px 4px', textAlign: 'center' } },
-                React.createElement("div", { style: { fontSize: 15, fontWeight: 800, color: col } }, v),
-                React.createElement("div", { style: { fontSize: 9, color: SB, marginTop: 1 } }, l)))))),
-        filtered.map(firm => {
-            const { ts, al, ver, net } = ozet(firm);
-            if (ts.length === 0)
-                return null;
-            return (React.createElement("button", { key: firm, onClick: () => setSel(firm), style: { width: '100%', background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, padding: '13px 14px', textAlign: 'left', cursor: 'pointer', boxShadow: '0 1px 6px rgba(60,52,38,.06)' } },
-                React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } },
-                    React.createElement("div", { style: { width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 } }, "\uD83C\uDFE2"),
-                    React.createElement("div", { style: { flex: 1 } },
-                        React.createElement("div", { style: { fontWeight: 700, fontSize: 14, color: TX } }, firm),
-                        React.createElement("div", { style: { fontSize: 11, color: SB, marginTop: 1 } },
-                            ts.length,
-                            " kay\u0131t")),
-                    React.createElement("div", { style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 } },
-                        al > 0 && React.createElement("span", { style: { background: '#E8F5ED', color: G, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 } },
-                            "+",
-                            fr(al),
-                            "\u20BA"),
-                        ver > 0 && React.createElement("span", { style: { background: '#FDF8ED', color: BR, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 } },
-                            "-",
-                            fr(ver),
-                            "\u20BA")),
-                    React.createElement("span", { style: { color: SB, fontSize: 16, marginLeft: 4 } }, "\u203A"))));
-        })));
+
+    const [openFirms, setOpenFirms] = useState(true);
+    return (React.createElement("div", { className: "card" },
+        React.createElement("button", { onClick: () => setOpenFirms(v => !v), style: { width: '100%', background: INP, border: '1px solid ' + BOR, borderRadius: 12, padding: '12px 14px', fontWeight: 800, color: TX, textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
+            React.createElement("span", null, '\uD83D\uDCCA Firma Hesaplar\u0131'),
+            React.createElement("span", { style: { color: SB, fontSize: 14 } }, openFirms ? '\u2212' : '+')),
+        openFirms && React.createElement("div", { style: { marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 } },
+            React.createElement("input", { value: ara, onChange: e => { setAra(e.target.value); setSel(null); }, placeholder: "\uD83D\uDD0D Firma ara...", className: "inp", style: { fontSize: '13px' } }),
+            sel ? (function() {
+                const { ts, al, ver, net } = ozet(sel);
+                const mts = ts.filter(t => t.date && t.date.startsWith(ay));
+                const mAl = Math.round(mts.filter(t => !t.firmSettled && t.netOl > 0).reduce((s, t) => s + t.netOl, 0));
+                const mVer = Math.round(mts.filter(t => !t.firmSettled && t.netOl < 0).reduce((s, t) => s + Math.abs(t.netOl), 0));
+                const sirali = ts.slice().sort(sortHesapTs);
+                const onunVerdikleri = sirali.filter(t => t.yon === 'oVerdi');
+                const benimVerdiklerim = sirali.filter(t => t.yon === 'benVerdim');
+                const altKayitlar = sirali.filter(t => t.yon === 'alt');
+                return React.createElement(React.Fragment, null,
+                    React.createElement("button", { onClick: () => { setDetayT(null); setSel(null); }, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 10, padding: '8px 12px', color: TX, fontWeight: 700, fontSize: 12, cursor: 'pointer', textAlign: 'left' } }, "\u2190 T\u00FCm Firmalar"),
+                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+                        React.createElement("div", { style: { width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 } }, "\uD83C\uDFE2"),
+                        React.createElement("div", null,
+                            React.createElement("div", { style: { fontWeight: 800, fontSize: 15, color: TX } }, sel),
+                            React.createElement("div", { style: { fontSize: 10, color: SB } }, ts.length + " kay\u0131t"))),
+                    React.createElement("div", { style: { background: net >= 0 ? '#E8F5ED' : '#F8EBEB', border: '1px solid ' + (net >= 0 ? '#A8D5B5' : '#D8A0A0'), borderRadius: 11, padding: '10px', textAlign: 'center' } },
+                        React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: net >= 0 ? G : R, marginBottom: 2 } }, net >= 0 ? '\u00D6LMEZTUR ALACAKLI' : '\u00D6LMEZTUR VERECEKL\u0130'),
+                        React.createElement("div", { style: { fontSize: 22, fontWeight: 800, color: net >= 0 ? G : R } }, fr(Math.abs(net)) + " \u20BA")),
+                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 } },
+                        React.createElement("div", { style: { background: '#E8F5ED', borderRadius: 9, padding: '8px', textAlign: 'center' } },
+                            React.createElement("div", { style: { fontSize: 9, fontWeight: 700, color: G } }, "ALACAK"),
+                            React.createElement("div", { style: { fontSize: 15, fontWeight: 800, color: G } }, fr(al) + " \u20BA")),
+                        React.createElement("div", { style: { background: '#FDF8ED', borderRadius: 9, padding: '8px', textAlign: 'center' } },
+                            React.createElement("div", { style: { fontSize: 9, fontWeight: 700, color: BR } }, "VERECEK"),
+                            React.createElement("div", { style: { fontSize: 15, fontWeight: 800, color: BR } }, fr(ver) + " \u20BA"))),
+                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+                        React.createElement("span", { style: { fontSize: 11, fontWeight: 700, color: TX } }, "Ayl\u0131k"),
+                        React.createElement("input", { type: "month", value: ay, onChange: e => setAy(e.target.value), style: { marginLeft: 'auto', background: INP, border: '1px solid ' + BOR, borderRadius: 8, padding: '4px 8px', color: TX, fontSize: 12 } })),
+                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 } }, [[mts.length, 'Transfer', NAV], [fr(mAl) + '\u20BA', 'Alacak', G], [fr(mVer) + '\u20BA', 'Verecek', BR]].map(([v, l, col]) => (React.createElement("div", { key: l, style: { background: INP, borderRadius: 9, padding: '7px 4px', textAlign: 'center' } },
+                        React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: col } }, v),
+                        React.createElement("div", { style: { fontSize: 8, color: SB, marginTop: 1 } }, l))))),
+                    React.createElement("div", { style: { fontWeight: 700, fontSize: 12, color: TX, marginTop: 4 } }, "Transferler"),
+                    React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
+                        renderHesapBolum(sel + ' verdi\u011Fi i\u015Fler', onunVerdikleri, NAV),
+                        renderHesapBolum('\u00D6lmeztur verdi\u011Fi i\u015Fler', benimVerdiklerim, BR),
+                        altKayitlar.length > 0 && renderHesapBolum('Alt acenta i\u015Fleri', altKayitlar, O)),
+                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 } },
+                        React.createElement("button", { onClick: () => { copyText(sirketMsg(sel)); tip('Kopyaland\u0131!'); }, style: { background: G, color: '#fff', border: 'none', borderRadius: 11, padding: '10px 4px', fontWeight: 700, fontSize: '10px', cursor: 'pointer', lineHeight: 1.4 } }, "\uD83D\uDCE4 \u015Eirkete\nKopyala"),
+                        React.createElement("button", { onClick: () => excelExport(sel), style: { background: G, color: '#fff', border: 'none', borderRadius: 11, padding: '10px 4px', fontWeight: 700, fontSize: '10px', cursor: 'pointer', lineHeight: 1.4 } }, "\uD83D\uDCCA Excel\n\u0130ndir"),
+                        React.createElement("button", { onClick: () => {
+                                const { ts: ts2, al: al2, ver: ver2, net: net2 } = ozet(sel);
+                                const rows2 = ts2.slice().sort((a, b) => a.date < b.date ? -1 : 1).map((t, i) => { const kar2 = transferNetAmount({ ...t }); return (i + 1) + '. ' + t.date + ' ' + t.time + ' | ' + (t.pickup || '\u2014') + ' \u2192 ' + (t.dropoff || '\u2014') + '\n   Ara\u00E7:' + fr(t.driverPayment) + '\u20BA K\u00E2r:' + (kar2 >= 0 ? '+' : '') + fr(kar2) + '\u20BA ' + (t.firmSettled ? '[KAPALI]' : '[A\u00C7IK]'); }).join('\n\n');
+                                copyText('KEND\u0130 HESABIM \u2014 ' + sel + '\nAlacak:' + fr(al2) + '\u20BA Verecek:' + fr(ver2) + '\u20BA Net:' + (net2 >= 0 ? '+' : '') + fr(net2) + '\u20BA\n' + '\u2500'.repeat(24) + '\n\n' + rows2);
+                                tip('Kopyaland\u0131!');
+                            }, style: { background: 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 4px', fontWeight: 700, fontSize: '10px', cursor: 'pointer', lineHeight: 1.4 } }, "\uD83D\uDCCB Kendi\nHesab\u0131m")),
+                    renderHesapDetayModal());
+            })()
+            : React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 7 } },
+                filtered.map(firm => {
+                    const { ts, al, ver, net } = ozet(firm);
+                    if (ts.length === 0) return null;
+                    return React.createElement("button", { key: firm, onClick: () => setSel(firm), style: { width: '100%', background: '#fff', border: '1px solid ' + BOR, borderRadius: 12, padding: '11px 12px', textAlign: 'left', cursor: 'pointer', boxShadow: '0 1px 4px rgba(60,52,38,.05)' } },
+                        React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 9 } },
+                            React.createElement("div", { style: { width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 } }, "\uD83C\uDFE2"),
+                            React.createElement("div", { style: { flex: 1 } },
+                                React.createElement("div", { style: { fontWeight: 700, fontSize: 13, color: TX } }, firm),
+                                React.createElement("div", { style: { fontSize: 10, color: SB, marginTop: 1 } }, ts.length + " kay\u0131t")),
+                            React.createElement("div", { style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 } },
+                                al > 0 && React.createElement("span", { style: { background: '#E8F5ED', color: G, borderRadius: 5, padding: '2px 7px', fontSize: 10, fontWeight: 800 } }, "+" + fr(al) + "\u20BA"),
+                                ver > 0 && React.createElement("span", { style: { background: '#FDF8ED', color: BR, borderRadius: 5, padding: '2px 7px', fontSize: 10, fontWeight: 800 } }, "-" + fr(ver) + "\u20BA")),
+                            React.createElement("span", { style: { color: SB, fontSize: 15, marginLeft: 3 } }, "\u203A")));
+                }))
+        )));
 }
 
 function HesapExtras({ agencies, setAgencies, agencyPhones, setAgencyPhones, drivers, setDrivers, debts, setDebts, tip }) {
@@ -1956,16 +1875,21 @@ function App() {
                             t.flightCode && React.createElement("span", { style: { background: '#EEF3F8', color: NAV, border: '1px solid #B8CADC', borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700 } }, '✈ ' + t.flightCode)
                         ),
                         /* Agency flow */
-                        React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: TX, marginBottom: 3, lineHeight: 1.3 } },
+                        React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: TX, marginBottom: 2, lineHeight: 1.3 } },
                             React.createElement("span", null, gvn),
                             React.createElement("span", { style: { color: SB, margin: '0 6px', fontWeight: 500 } }, '→'),
                             React.createElement("span", null, asg)
                         ),
-                        /* Route pickup → dropoff */
-                        React.createElement("div", { style: { fontSize: 12, color: SB, fontWeight: 500, lineHeight: 1.35 } },
-                            React.createElement("span", null, pickup),
-                            React.createElement("span", { style: { margin: '0 6px' } }, '→'),
-                            React.createElement("span", null, dropoff)
+                        /* Alt acenta sub-line (small golden) */
+                        t.altAcenta && React.createElement("div", { style: { fontSize: 10, color: '#9A7525', fontWeight: 600, marginBottom: 3, letterSpacing: .1 } },
+                            'alt acenta: ' + t.altAcenta
+                        ),
+                        /* Route shortLoc → shortLoc + vehicle */
+                        React.createElement("div", { style: { fontSize: 12, color: TX, fontWeight: 600, lineHeight: 1.35, marginTop: 2 } },
+                            React.createElement("span", null, shortLoc(pickup)),
+                            React.createElement("span", { style: { margin: '0 6px', color: SB, fontWeight: 500 } }, '→'),
+                            React.createElement("span", null, shortLoc(dropoff)),
+                            vh && React.createElement("span", { style: { marginLeft: 8, color: SB, fontWeight: 500 } }, vh.ico + ' ' + vh.n)
                         )
                     ),
                     /* Right: CUSTOMER AMOUNT + payment status */
@@ -2239,17 +2163,17 @@ function App() {
                         React.createElement("img", { src: LOGO_URI, alt: "Ölmeztur", style: { width: 44, height: 44, borderRadius: 11, objectFit: 'cover', border: '1px solid rgba(200,169,98,.35)', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,.15)' } }),
                         React.createElement("div", null,
                             React.createElement("div", { style: { color: '#fff', fontWeight: 800, fontSize: 14, letterSpacing: -.2 } }, "\u00D6deme/Transfer Bilgileri"),
-                            React.createElement("div", { style: { color: 'rgba(200,169,98,.8)', fontSize: 9, fontWeight: 600, letterSpacing: .4, display: 'flex', alignItems: 'center', gap: 5 } },
+                            React.createElement("div", { style: { color: 'rgba(255,255,255,.75)', fontSize: 9, fontWeight: 600, letterSpacing: .4, display: 'flex', alignItems: 'center', gap: 5 } },
                                 React.createElement("span", null, T.length + " TRANSFER"),
                                 React.createElement("span", { style: { background: authUser ? '#16794F' : '#B02828', color: '#fff', padding: '2px 6px', borderRadius: 4, fontSize: 9, fontWeight: 800 } }, authUser ? '☁ BAĞLI' : '☁ OFFLINE')))),
                     React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 5 } },
-                        React.createElement("span", { style: { background: 'rgba(200,169,98,.15)', color: GOLD, padding: '4px 8px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid rgba(200,169,98,.2)' } },
+                        React.createElement("span", { style: { background: 'rgba(255,255,255,.14)', color: '#FFFFFF', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,.22)', letterSpacing: .3 } },
                             "$ ",
                             rates.USD),
-                        React.createElement("span", { style: { background: 'rgba(200,169,98,.15)', color: GOLD, padding: '4px 8px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid rgba(200,169,98,.2)' } },
+                        React.createElement("span", { style: { background: 'rgba(255,255,255,.14)', color: '#FFFFFF', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,.22)', letterSpacing: .3 } },
                             "\u20AC ",
                             rates.EUR),
-                        React.createElement("button", { onClick: () => setBkpM(true), style: { background: 'rgba(255,255,255,.1)', border: 'none', color: 'rgba(255,255,255,.8)', borderRadius: 8, padding: '5px 8px', fontSize: 14, lineHeight: 1 } }, "\uD83D\uDEE1\uFE0F"))),
+                        React.createElement("button", { onClick: () => setBkpM(true), style: { background: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.22)', color: '#FFFFFF', borderRadius: 8, padding: '5px 9px', fontSize: 14, lineHeight: 1 } }, "\uD83D\uDEE1\uFE0F"))),
                 React.createElement("div", { style: { display: 'flex', gap: 1, background: 'rgba(0,0,0,.2)', borderRadius: 12, padding: 3, marginBottom: 0 } }, [['new', '+ Yeni'], ['list', 'Transferler'], ['hesap', 'Hesap'], ['arac', '🚐 ' + PLAKA]].map(([id, lbl]) => (React.createElement("button", { key: id, onClick: () => setTab(id), style: { flex: 1, padding: '9px 2px', borderRadius: 9, border: 'none', background: tab === id ? GOLD : 'transparent', color: tab === id ? NAV2 : 'rgba(255,255,255,.55)', fontWeight: 700, cursor: 'pointer', fontSize: '10px', letterSpacing: .2, boxShadow: tab === id ? '0 1px 8px rgba(0,0,0,.2)' : 'none' } }, lbl)))))),
         React.createElement("main", { className: "main-cont", style: { padding: '12px 12px 110px', maxWidth: 520, margin: '0 auto' } },
             tab === 'new' && (React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
