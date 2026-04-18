@@ -47,21 +47,20 @@ button:active{opacity:.88;transform:scale(.985)}
 .tr-row:hover{box-shadow:0 4px 18px rgba(60,52,38,.09)}
 .amt-pos{color:#246B3D;font-variant-numeric:tabular-nums}
 .amt-neg{color:#A33A3A;font-variant-numeric:tabular-nums}
-/* Transfer type-based gradient accents — NUDE palette (widget uyumlu) */
+/* Transfer type-based gradient accents — NUDE palette */
 .tr-arrival{background:linear-gradient(135deg,#D6C5AE 0%,#E8DFCF 30%,#FFFCF8 65%) !important;border-left:3px solid #C0AB8D !important}
 .tr-departure{background:linear-gradient(135deg,#C6C2BA 0%,#D9D6CF 30%,#FFFCF8 65%) !important;border-left:3px solid #A8A49A !important}
 .tr-tour{background:linear-gradient(135deg,#B8C4C9 0%,#DBE3E5 30%,#FFFCF8 65%) !important;border-left:3px solid #8EA2A8 !important}
 .tr-intercity{background:linear-gradient(135deg,#E4DDD4 0%,#F0EBE3 30%,#FFFCF8 65%) !important;border-left:3px solid #8C857D !important}
-/* Date header — dark gray (widget topbar uyumlu) */
-.date-hdr{background:#686868;border:1px solid #585858;border-radius:12px;padding:12px 18px;margin:14px 0 10px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.08),inset 0 -1px 0 rgba(0,0,0,.2);position:relative;overflow:hidden}
+/* Date header — dark gray */
+.date-hdr{background:#686868;border:1px solid #585858;border-radius:12px;padding:12px 18px;margin:14px 0 8px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.08),inset 0 -1px 0 rgba(0,0,0,.2);position:relative;overflow:hidden}
 .date-hdr::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#A8A49A 0%,#8C857D 50%,#6D665E 100%);box-shadow:0 0 10px rgba(168,164,154,.3)}
 .date-hdr::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.18) 50%,transparent 100%)}
 .date-hdr-txt{font-size:12.5px;font-weight:700;color:#FFFFFF;letter-spacing:1.2px;text-transform:uppercase;text-shadow:0 1px 2px rgba(0,0,0,.35);font-feature-settings:'ss01' on}
 .date-hdr-meta{font-size:10px;color:rgba(255,255,255,.65);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
-/* Bugüne Dön floating button */
-.bugun-btn{position:fixed;bottom:110px;right:16px;z-index:45;background:#686868;color:#FFFFFF;border:1px solid rgba(255,255,255,.15);border-radius:24px;padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:.3px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.25);display:flex;align-items:center;gap:6px;opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .2s,transform .2s}
-.bugun-btn.visible{opacity:1;transform:translateY(0);pointer-events:auto}
-.bugun-btn:active{background:#545454}
+/* Bugüne Dön butonu — inline, tarih bar altında */
+.bugun-inline{display:inline-flex;align-items:center;gap:5px;background:#FFFCF8;color:#1D1C1A;border:1px solid #E4DDD4;border-radius:20px;padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.3px;cursor:pointer;margin:0 0 10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.bugun-inline:active{background:#F0EBE3}
 </style>
 </head>
 <body>
@@ -1223,6 +1222,7 @@ function HesapExtras({ agencies, setAgencies, agencyPhones, setAgencyPhones, dri
 function App() {
     const [T, setT] = useState([]);
     const [tab, setTab] = useState('new');
+    const [openKarPanel, setOpenKarPanel] = useState(false);
     const [rates, setRates] = useState({ USD: 44.35, EUR: 51.50 });
     const [form, setForm] = useState(BF);
     const [agencies, setAgencies] = useState([OL]);
@@ -2003,10 +2003,24 @@ function App() {
                 const dayRows = (dayMap[dayKey] || []).slice().sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
                 const dayTotal = dayRows.length;
                 const dayDone = dayRows.filter(x => x.status === 'tam').length;
+                const todayKey = new Date().toISOString().split('T')[0];
+                const isTodayHeader = dayKey === todayKey;
                 return React.createElement("div", { key: dayKey, id: 'day-' + dayKey, style: { borderTop: 'none' } },
                     React.createElement("div", { className: 'date-hdr' },
                         React.createElement("div", { className: 'date-hdr-txt' }, dayKey === 'Tarihsiz' ? 'TARIHSIZ' : new Date(dayKey).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })),
                         React.createElement("div", { className: 'date-hdr-meta' }, dayTotal + ' transfer · ' + dayDone + ' tamam')),
+                    !isTodayHeader && React.createElement("button", {
+                        className: 'bugun-inline',
+                        onClick: () => {
+                            const todayEl = document.getElementById('day-' + todayKey);
+                            const root = document.getElementById('root');
+                            if (todayEl && root) {
+                                root.scrollTo({ top: todayEl.offsetTop - 130, behavior: 'smooth' });
+                            } else if (root) {
+                                root.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                        }
+                    }, "📅 Bugüne Dön"),
                     React.createElement("div", null, dayRows.map(renderTransferItem)));
             }));
         };
@@ -2374,40 +2388,48 @@ function App() {
                 React.createElement("div", { className: "card" }, React.createElement("div", { style: { fontWeight: 800, fontSize: 14, color: TX, marginBottom: 10 } }, "👨🏻‍✈️ Kaptanlar"), React.createElement("div", { style: { display: 'flex', gap: 8, marginBottom: 10 } }, React.createElement("input", { value: newDriverContact.name, onChange: e => setNewDriverContact(p => ({ ...p, name: e.target.value })), placeholder: "Kaptan adı", className: "inp", style: { flex: 1 } }), React.createElement("input", { value: newDriverContact.phone, onChange: e => setNewDriverContact(p => ({ ...p, phone: e.target.value })), placeholder: "Telefon", className: "inp", style: { width: 130, flex: 'none' } }), React.createElement("button", { onClick: () => { addDriverContact(newDriverContact.name, newDriverContact.phone); setNewDriverContact({ name: '', phone: '' }); }, style: { background: G, color: '#fff', border: 'none', borderRadius: 10, padding: '0 14px', fontWeight: 800, cursor: 'pointer' } }, "+")), React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, drivers.map((d, i) => React.createElement("div", { key: i, style: { display: 'flex', alignItems: 'center', gap: 8, padding: 10, border: '1px solid ' + BOR, borderRadius: 12, background: INP } }, React.createElement("div", { style: { flex: 1 } }, React.createElement("div", { style: { fontWeight: 700, fontSize: 13, color: TX } }, d.name), React.createElement("div", { style: { fontSize: 11, color: SB } }, d.phone || 'Numara yok')), React.createElement("button", { onClick: () => { const nn = prompt('Kaptan adı', d.name) || d.name; const pp = prompt('Telefon', d.phone || '') || ''; if (nn) setDrivers(p => [...p.filter(x => x.name !== d.name && x.name !== nn), { name: nn, phone: pp }]); }, style: { background: NAV, color: '#fff', border: 'none', borderRadius: 9, padding: '8px 10px', fontWeight: 800, cursor: 'pointer' } }, 'Düzenle'), React.createElement("button", { onClick: () => { if (window.confirm(d.name + ' silinsin mi?')) setDrivers(p => p.filter(x => x.name !== d.name)); }, style: { background: R, color: '#fff', border: 'none', borderRadius: 9, padding: '8px 10px', fontWeight: 800, cursor: 'pointer' } }, 'Sil'))))))),
             tab === 'hesap' && React.createElement(React.Fragment, null, React.createElement(HesapTab, { T: T, sT: setT, agencies: agencies, tip: tip }), React.createElement(HesapExtras, { agencies: agencies, setAgencies: setAgencies, agencyPhones: agencyPhones, setAgencyPhones: setAgencyPhones, drivers: drivers, setDrivers: setDrivers, debts: debts, setDebts: setDebts, tip: tip })),
             tab === 'arac' && React.createElement(AracTab, { tip: tip, aracK: aracK, setAracK: setAracK })),
-        tab === 'list' && React.createElement("button", {
-            className: "bugun-btn visible",
-            onClick: () => {
-                const today = new Date().toISOString().split('T')[0];
-                const el = document.getElementById('day-' + today);
-                const root = document.getElementById('root');
-                if (el && root) {
-                    const topOffset = el.offsetTop - 130;
-                    root.scrollTo({ top: topOffset, behavior: 'smooth' });
-                } else if (root) {
-                    root.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            }
-        }, "📅 Bugüne Dön"),
         React.createElement("div", { className: "sb", style: { position: 'fixed', bottom: 0, left: 0, right: 0, background: '#686868', borderTop: '1px solid rgba(255,255,255,.1)', boxShadow: '0 -2px 20px rgba(0,0,0,.3)' } },
             React.createElement("div", { style: { maxWidth: 520, margin: '0 auto', padding: '8px 14px 4px' } },
-                React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 4 } },
+                /* Açılır detay panel */
+                openKarPanel && React.createElement("div", { style: { padding: '10px 2px 12px', borderBottom: '1px solid rgba(255,255,255,.12)', marginBottom: 8 } },
+                    React.createElement("div", { style: { fontSize: 9, color: 'rgba(255,255,255,.55)', fontWeight: 800, letterSpacing: .6, marginBottom: 6 } }, "BU AY (" + new Date().toLocaleDateString('tr-TR', { month: 'long' }).toUpperCase() + ")"),
+                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 } },
+                        React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "ÖLMEZTUR"),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthExternalNet >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.monthExternalNet >= 0 ? '+' : '') + st.monthExternalNet.toLocaleString('tr-TR') + '₺')),
+                        React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "🚐 16 LMZ 55"),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthPlate16Net >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.monthPlate16Net >= 0 ? '+' : '') + st.monthPlate16Net.toLocaleString('tr-TR') + '₺')),
+                        React.createElement("div", { style: { background: 'rgba(255,255,255,.14)', borderRadius: 8, padding: '7px 4px', textAlign: 'center', border: '1px solid rgba(255,255,255,.15)' } },
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.75)', fontWeight: 800, letterSpacing: .3, marginBottom: 2 } }, "TOPLAM"),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.mP >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.mP >= 0 ? '+' : '') + st.mP.toLocaleString('tr-TR') + '₺'))),
+                    /* Yıllık */
+                    React.createElement("div", { style: { fontSize: 9, color: 'rgba(255,255,255,.55)', fontWeight: 800, letterSpacing: .6, marginBottom: 6 } }, st.yr + " YILI"),
+                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 } },
+                        React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "ÖLMEZTUR"),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.yearExternalNet >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.yearExternalNet >= 0 ? '+' : '') + st.yearExternalNet.toLocaleString('tr-TR') + '₺')),
+                        React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "🚐 16 LMZ 55"),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.yearPlate16Net >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.yearPlate16Net >= 0 ? '+' : '') + st.yearPlate16Net.toLocaleString('tr-TR') + '₺')),
+                        React.createElement("div", { style: { background: 'rgba(255,255,255,.14)', borderRadius: 8, padding: '7px 4px', textAlign: 'center', border: '1px solid rgba(255,255,255,.15)' } },
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.75)', fontWeight: 800, letterSpacing: .3, marginBottom: 2 } }, "TOPLAM"),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.yP >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.yP >= 0 ? '+' : '') + st.yP.toLocaleString('tr-TR') + '₺')))),
+                /* Özet satır — her zaman görünür, tıklanabilir */
+                React.createElement("div", { onClick: () => setOpenKarPanel(v => !v), style: { display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none' } },
                     [[T.length, 'TOPLAM', '#fff'], [st.tam, 'TAM', '#A8E6B4'], [st.bos, 'BOŞ', '#EFDDBE'], [st.ipt, 'İPTAL', '#ECCFCF']].map(([v, l, col]) => (React.createElement("div", { key: l, style: { flex: 1, textAlign: 'center' } },
-                        React.createElement("div", { style: { fontSize: 16, fontWeight: 800, color: col, lineHeight: 1 } }, v),
-                        React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.35)', fontWeight: 700, letterSpacing: .4, marginTop: 1 } }, l)))),
-                    React.createElement("div", { style: { width: 1, height: 28, background: 'rgba(255,255,255,.1)', flexShrink: 0 } }),
-                    React.createElement("div", { style: { flex: 2, textAlign: 'right' } },
-                        React.createElement("div", { style: { fontSize: 9, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 1 } },
-                            "BU AY / ",
-                            st.yr,
-                            " NET"),
-                        React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: st.mP >= 0 ? '#A8E6B4' : '#ECCFCF' } },
-                            st.mP >= 0 ? '+' : '',
-                            st.mP.toLocaleString('tr-TR'),
-                            "\u20BA"),
-                        React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: st.yP >= 0 ? '#A8E6B4' : '#ECCFCF' } },
-                            st.yP >= 0 ? '+' : '',
-                            st.yP.toLocaleString('tr-TR'),
-                            "\u20BA"))))),
+                        React.createElement("div", { style: { fontSize: 15, fontWeight: 800, color: col, lineHeight: 1 } }, v),
+                        React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.4)', fontWeight: 700, letterSpacing: .4, marginTop: 1 } }, l)))),
+                    React.createElement("div", { style: { width: 1, height: 30, background: 'rgba(255,255,255,.15)', flexShrink: 0 } }),
+                    /* Ölmeztur aylık */
+                    React.createElement("div", { style: { flex: 1.4, textAlign: 'right' } },
+                        React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3 } }, "ÖLMEZTUR"),
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthExternalNet >= 0 ? '#A8E6B4' : '#ECCFCF', lineHeight: 1.15 } }, (st.monthExternalNet >= 0 ? '+' : '') + st.monthExternalNet.toLocaleString('tr-TR') + '₺')),
+                    /* 16 LMZ 55 aylık */
+                    React.createElement("div", { style: { flex: 1.4, textAlign: 'right' } },
+                        React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3 } }, "🚐 16 LMZ 55"),
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthPlate16Net >= 0 ? '#A8E6B4' : '#ECCFCF', lineHeight: 1.15 } }, (st.monthPlate16Net >= 0 ? '+' : '') + st.monthPlate16Net.toLocaleString('tr-TR') + '₺')),
+                    React.createElement("span", { style: { fontSize: 12, color: 'rgba(255,255,255,.55)', marginLeft: 2, transition: 'transform .2s', transform: openKarPanel ? 'rotate(180deg)' : 'rotate(0deg)', display: 'inline-block' } }, "▲")))),
         msgM && (React.createElement("div", { className: "mo", onClick: () => setMsgM(null) },
             React.createElement("div", { className: "ms", onClick: e => e.stopPropagation() },
                 React.createElement("div", { style: { width: 40, height: 4, background: BOR, borderRadius: 3, margin: '0 auto 14px' } }),
