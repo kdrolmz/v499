@@ -448,6 +448,29 @@ function olmezKar(t) {
         return 0;
     return c - d;
 }
+/* POTANSİYEL NET KAR — ödeme alınıp alınmadığından BAĞIMSIZ olarak transferden Ölmeztur'a kalacak tahmini kâr.
+   Muhasebeyi (calcBal/calcAltBal) etkilemez; sadece görüntüleme ve alt bar özetinde kullanılır.
+   Mantık: müşteri ücreti - araç ücreti (alt acenta varsa - alt acenta ücreti) */
+function olmezPotentialKar(t) {
+    if (!t) return 0;
+    const c = parseFloat(t.customerTRY || t.paymentAmount) || 0;
+    const d = parseFloat(t.driverPayment) || 0;
+    const alt = parseFloat(t.altAcentaUcreti) || 0;
+    const alan = t.assignedTo === OL && t.givenBy && t.givenBy !== OL;
+    const veren = t.givenBy === OL && t.assignedTo && t.assignedTo !== OL;
+    if (alan) {
+        /* Başka firma verdi, biz yaptık — bize ödenen ücret (alt acenta varsa farkı) */
+        if (t.altAcenta && alt > 0) return d - alt;
+        return d;
+    }
+    if (veren) {
+        /* Biz verdik, başka firma yaptı — müşteri-araç farkı (alt acenta varsa -alt) */
+        if (t.altAcenta && alt > 0) return d - alt;
+        return c - d;
+    }
+    /* Hem veren hem yapan dış firma, veya OL→OL — müşteri-araç farkı */
+    return c - d;
+}
 function calcBal(t) {
     const c = parseFloat(t.customerTRY || t.paymentAmount) || 0;
     const d = parseFloat(t.driverPayment) || 0;
@@ -591,6 +614,13 @@ function externalTransferNetAmount(t) {
 function netKar(liste) { return Math.round(liste.reduce((s, t) => s + transferNetAmount(t), 0)); }
 function summaryNetKar(liste) {
     return Math.round((liste || []).reduce((s, t) => s + externalTransferNetAmount(t), 0));
+}
+/* POTANSİYEL tarafı — ödeme durumundan bağımsız, kart/alt bar gösteriminde kullanılır */
+function externalPotentialNet(t) {
+    return shouldUseOnlyPlate16TabForSummary(t) ? 0 : olmezPotentialKar(t);
+}
+function potentialSummaryNet(liste) {
+    return Math.round((liste || []).reduce((s, t) => s + externalPotentialNet(t), 0));
 }
 function LocIn({ lbl, field, value, sugg, show, onChange, onSel, onFocus, onBlur }) {
     return (React.createElement("div", null,
@@ -1670,6 +1700,7 @@ function App() {
         const ts = T.filter(t => t.date && String(t.date).slice(0, 7) === monthKey);
         return {
             net: summaryNetKar(ts),
+            potentialNet: potentialSummaryNet(ts),
             count: ts.filter(t => !shouldUseOnlyPlate16TabForSummary(t)).length
         };
     };
@@ -1700,6 +1731,7 @@ function App() {
         const extAy = externalMonthBreakdown(ayStr);
         const extLast = externalMonthBreakdown((mo === 0 ? yr - 1 : yr) + '-' + String((mo - 1 + 12) % 12 + 1).padStart(2, '0'));
         const extYil = Math.round(yT.reduce((s, t) => s + externalTransferNetAmount(t), 0));
+        const extYilPotential = Math.round(yT.reduce((s, t) => s + externalPotentialNet(t), 0));
         const arAy = plate16MonthBreakdown(ayStr);
         const arYil = Array.from({ length: 12 }, (_, i) => plate16MonthBreakdown(yr + '-' + String(i + 1).padStart(2, '0')).net).reduce((a, b) => a + b, 0);
         const ym = Array.from({ length: 12 }, (_, i) => {
@@ -1719,15 +1751,19 @@ function App() {
             bos: T.filter(t => t.status === 'bos').length,
             ipt: T.filter(t => t.status === 'iptal').length,
             mP: extAy.net + arAy.net,
+            mPpotential: extAy.potentialNet + arAy.net,
             lP: extLast.net,
             yP: extYil + arYil,
+            yPpotential: extYilPotential + arYil,
             mC: mT.length,
             yr,
             mPaid: mT.filter(t => getCollectionState(t) === 'collected').length,
             mUnpaid: mT.filter(t => getCollectionState(t) === 'uncollected').length,
             monthExternalNet: extAy.net,
+            monthExternalPotential: extAy.potentialNet,
             monthPlate16Net: arAy.net,
             yearExternalNet: extYil,
+            yearExternalPotential: extYilPotential,
             yearPlate16Net: arYil,
             ym
         };
@@ -1909,7 +1945,19 @@ function App() {
                                 borderRadius: 6, padding: '3px 9px', fontSize: 9, fontWeight: 700,
                                 cursor: 'pointer', whiteSpace: 'nowrap', letterSpacing: .2
                             }
-                        }, collectionState === 'collected' ? '✓ Şirket ödemeyi aldı' : '⏳ Ödeme bekleniyor')
+                        }, collectionState === 'collected' ? '✓ Şirket ödemeyi aldı' : '⏳ Ödeme bekleniyor'),
+                        /* ─── ÖLMEZTUR NET KÂR / 16 LMZ 55 NET (ödeme durumundan bağımsız) ─── */
+                        (() => {
+                            const potKar = olmezPotentialKar(t);
+                            const isPlate16 = isPlate16Transfer(t);
+                            const lbl = isPlate16 ? '🚐 16 LMZ 55 Net' : '💰 Ölmeztur Net';
+                            const netColor = potKar > 0 ? '#246B3D' : (potKar < 0 ? '#A33A3A' : SB);
+                            const netBg    = potKar > 0 ? '#E8F5ED' : (potKar < 0 ? '#FDEEEE' : '#F6F2EC');
+                            const netBord  = potKar > 0 ? '#A8D5B5' : (potKar < 0 ? '#ECCFCF' : '#E4DDD4');
+                            return React.createElement("div", { style: { background: netBg, border: '1px solid ' + netBord, borderRadius: 7, padding: '4px 10px', whiteSpace: 'nowrap', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 } },
+                                React.createElement("div", { style: { fontSize: 8, color: SB, fontWeight: 700, letterSpacing: .4, textTransform: 'uppercase' } }, lbl),
+                                React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: netColor, fontVariantNumeric: 'tabular-nums' } }, (potKar >= 0 ? '+' : '') + Math.round(potKar).toLocaleString('tr-TR') + '₺'));
+                        })()
                     )
                 )
             ),
@@ -2351,31 +2399,38 @@ function App() {
                     React.createElement("textarea", { value: form.notes, onChange: e => sf({ notes: e.target.value }), placeholder: "Notlar...", rows: 2, className: "inp", style: { resize: 'none' } })),
                 React.createElement("button", { onClick: submit, style: { width: '100%', background: 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontWeight: 800, fontSize: '15px', boxShadow: '0 6px 22px rgba(91,74,63,.2)', cursor: 'pointer', letterSpacing: .3 } }, editId ? '✓ Güncelle' : '+ Transfer Kaydet'))),
             tab === 'list' && (React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
-                React.createElement("div", { className: "card", style: { display: 'flex', flexDirection: 'column', gap: 7 } },
+                React.createElement("div", { className: "card", style: { display: 'flex', flexDirection: 'column', gap: 8, padding: 12 } },
+                    /* Arama */
                     React.createElement("input", { value: flt.search, onChange: e => setFlt(p => ({ ...p, search: e.target.value })), placeholder: "\uD83D\uDD0D  Ara...", className: "inp", style: { fontSize: '14px' } }),
-                    React.createElement("div", { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } }, [['all', 'Tümü'], ['tam', '✅ Tam'], ['bos', '🔄 Boş'], ['iptal', '❌ İptal']].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, status: v })), style: { background: flt.status === v ? NAV : INP, color: flt.status === v ? '#fff' : SB, border: 'none', borderRadius: 7, padding: '6px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' } }, l)))),
-                    React.createElement("div", { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } }, [['all', 'Tüm transferler'], ['plate16', '🚐 ' + PLAKA]].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, plateView: v })), style: { background: flt.plateView === v ? '#F8EDD2' : INP, color: flt.plateView === v ? NAV2 : SB, border: '1px solid ' + (flt.plateView === v ? '#EDD4A0' : 'transparent'), borderRadius: 7, padding: '6px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' } }, l)))),
-                    flt.plateView !== 'plate16' && React.createElement("div", { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } }, [['all', 'Tahsil: Tümü'], ['collected', '✓ Alınmış'], ['uncollected', '⏳ Alınmamış']].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, collect: v })), style: { background: flt.collect === v ? NAV2 : INP, color: flt.collect === v ? GOLD : SB, border: flt.collect === v ? '1px solid rgba(168,164,154,.45)' : '1px solid transparent', borderRadius: 7, padding: '6px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' } }, l))))),
-                    flt.plateView === 'plate16' && React.createElement(React.Fragment, null,
-                        React.createElement("div", { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } }, [['all', '16 LMZ 55: Tümü'], ['collected', '✓ 16 LMZ 55 Alınmış'], ['uncollected', '⏳ 16 LMZ 55 Alınmamış']].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, plateCollect: v })), style: { background: flt.plateCollect === v ? '#5B4A3F' : INP, color: flt.plateCollect === v ? '#fff' : SB, border: flt.plateCollect === v ? '1px solid #5B4A3F' : '1px solid transparent', borderRadius: 7, padding: '6px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' } }, l)))),
-                        React.createElement("div", { style: { background: '#F5F0EB', color: NAV2, border: '1px solid #E0D4C8', borderRadius: 8, padding: '8px 10px', fontSize: 11, fontWeight: 700 } }, '16 LMZ 55 için sadece plaka alanına 16 LMZ 55 yazılan kayıtlar burada görünür. Şoföre göre eşleşme yapılmaz. Alınmış/alınmamış durumu sadece karttaki Müşteri ücreti alındı butonuna göre belirlenir.')),
-                React.createElement("div", { className: "card" },
-                    listIsPlate16 && React.createElement("div", { style: { marginBottom: 8, padding: '8px 10px', borderRadius: 10, background: '#F8EDD2', border: '1px solid #F1DFC0', color: NAV2, fontSize: 11, fontWeight: 800 } }, "🚐 " + PLAKA + " transferleri gösteriliyor"),
-                    React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 } },
-                        React.createElement("span", { style: { fontWeight: 700, fontSize: 12, color: TX } },
-                            listIsPlate16 ? (PLAKA + " — " + visibleListRows.length + " transfer") : ("Bu Ay — " + listMiniStats.mC + " transfer")),
-                        React.createElement("button", { onClick: () => setShowSt(v => !v), style: { background: 'none', border: 'none', color: NAV, fontSize: 11, fontWeight: 700, cursor: 'pointer' } }, showSt ? '▲' : '▼')),
-                    React.createElement("div", { style: { display: 'flex', gap: 10, justifyContent: 'space-around', textAlign: 'center' } }, [[listMiniStats.mC, 'Adet', NAV], [listMiniStats.tam, 'Tam', G], [listMiniStats.bos, 'Boş', O], [(listMiniStats.mP >= 0 ? '+' : '') + listMiniStats.mP.toLocaleString('tr-TR') + '₺', 'Dış iş neti', listMiniStats.mP >= 0 ? G : R]].map(([v, l, col]) => (React.createElement("div", { key: l },
-                        React.createElement("div", { style: { fontSize: 15, fontWeight: 800, color: col } }, v),
-                        React.createElement("div", { style: { fontSize: 9, color: SB, fontWeight: 600 } }, l))))),
-                    showSt && (React.createElement("div", { style: { marginTop: 10, paddingTop: 10, borderTop: '1px solid ' + BOR } }, [['Geçen ay dış iş neti', st.lP.toLocaleString('tr-TR') + '₺', TX], ['Bu ay Ölmeztur dış iş neti', st.monthExternalNet.toLocaleString('tr-TR') + '₺', TX], ['Bu ay 16 LMZ 55 neti', st.monthPlate16Net.toLocaleString('tr-TR') + '₺', G], ['2026 toplam net', st.yP.toLocaleString('tr-TR') + '₺', G], ['İptal', st.ipt, R]].map(([l, v, col]) => (React.createElement("div", { key: l, style: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 } },
-                        React.createElement("span", { style: { fontSize: 11, color: SB } }, l),
-                        React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: col } }, v)))),
-                        st.ym.length > 0 && React.createElement("div", { style: { marginTop: 8, background: '#F6F2EC', borderRadius: 10, padding: '8px 10px' } },
-                            React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: NAV, marginBottom: 6 } }, st.yr + ' AY AY NET KAZANÇ (Ölmeztur dış iş + 16 LMZ 55)'),
-                            st.ym.map(m => React.createElement("div", { key: m.key, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 } },
-                                React.createElement("span", { style: { fontSize: 11, color: SB, textTransform: 'capitalize' } }, m.label + ' (' + m.count + ')'),
-                                React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: m.net >= 0 ? G : R } }, (m.net >= 0 ? '+' : '') + m.net.toLocaleString('tr-TR') + '₺'))))))),
+                    /* Durum filtreleri — tek satır, kompakt */
+                    React.createElement("div", { style: { display: 'flex', gap: 4, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 2 } },
+                        [['all', 'Tümü', T.length], ['tam', '✅ Tam', st.tam], ['bos', '🔄 Boş', st.bos], ['iptal', '❌ İptal', st.ipt]].map(([v, l, cnt]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, status: v })), style: { background: flt.status === v ? '#686868' : '#F6F2EC', color: flt.status === v ? '#fff' : '#1D1C1A', border: '1px solid ' + (flt.status === v ? '#686868' : '#E4DDD4'), borderRadius: 8, padding: '7px 11px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0 } },
+                            React.createElement("span", null, l),
+                            React.createElement("span", { style: { background: flt.status === v ? 'rgba(255,255,255,.22)' : '#E4DDD4', color: flt.status === v ? '#fff' : '#8C857D', borderRadius: 10, padding: '1px 7px', fontSize: 10, fontWeight: 800, minWidth: 20, textAlign: 'center' } }, cnt))))),
+                    /* Plaka + tahsil filtreleri — tek satır */
+                    React.createElement("div", { style: { display: 'flex', gap: 4, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 2 } },
+                        React.createElement("button", { onClick: () => setFlt(p => ({ ...p, plateView: p.plateView === 'plate16' ? 'all' : 'plate16' })), style: { background: flt.plateView === 'plate16' ? '#1D1C1A' : '#F6F2EC', color: flt.plateView === 'plate16' ? '#fff' : '#1D1C1A', border: '1px solid ' + (flt.plateView === 'plate16' ? '#1D1C1A' : '#E4DDD4'), borderRadius: 8, padding: '7px 11px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 } }, '🚐 ' + PLAKA),
+                        flt.plateView !== 'plate16' && [['all', 'Tümü'], ['collected', '✓ Alınmış'], ['uncollected', '⏳ Alınmamış']].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, collect: v })), style: { background: flt.collect === v ? '#686868' : '#F6F2EC', color: flt.collect === v ? '#fff' : '#1D1C1A', border: '1px solid ' + (flt.collect === v ? '#686868' : '#E4DDD4'), borderRadius: 8, padding: '7px 11px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 } }, l))),
+                        flt.plateView === 'plate16' && [['all', 'Tümü'], ['collected', '✓ Alınmış'], ['uncollected', '⏳ Alınmamış']].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => setFlt(p => ({ ...p, plateCollect: v })), style: { background: flt.plateCollect === v ? '#686868' : '#F6F2EC', color: flt.plateCollect === v ? '#fff' : '#1D1C1A', border: '1px solid ' + (flt.plateCollect === v ? '#686868' : '#E4DDD4'), borderRadius: 8, padding: '7px 11px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 } }, l)))),
+                    /* Özet — tek satır, kompakt */
+                    React.createElement("div", { onClick: () => setShowSt(v => !v), style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F6F2EC', borderRadius: 10, padding: '8px 12px', border: '1px solid #E4DDD4', cursor: 'pointer' } },
+                        React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+                            React.createElement("span", { style: { fontSize: 11, color: '#8C857D', fontWeight: 700 } }, listIsPlate16 ? ('🚐 ' + visibleListRows.length + ' transfer') : ('Bu ay · ' + listMiniStats.mC + ' transfer')),
+                            React.createElement("span", { style: { fontSize: 13, fontWeight: 800, color: listMiniStats.mP >= 0 ? '#246B3D' : '#A33A3A', fontVariantNumeric: 'tabular-nums' } }, (listMiniStats.mP >= 0 ? '+' : '') + listMiniStats.mP.toLocaleString('tr-TR') + '₺')),
+                        React.createElement("span", { style: { fontSize: 11, color: '#8C857D', fontWeight: 700 } }, showSt ? '▲ Detay' : '▼ Detay')),
+                    /* Detaylı açılır özet */
+                    showSt && React.createElement("div", { style: { background: '#FFFCF8', borderRadius: 10, padding: '10px 12px', border: '1px solid #E4DDD4' } },
+                        [['Geçen ay dış iş neti', st.lP.toLocaleString('tr-TR') + '₺', '#1D1C1A'],
+                         ['Bu ay Ölmeztur dış iş neti', (st.monthExternalPotential >= 0 ? '+' : '') + st.monthExternalPotential.toLocaleString('tr-TR') + '₺', '#246B3D'],
+                         ['Bu ay 16 LMZ 55 neti (gider sonrası)', (st.monthPlate16Net >= 0 ? '+' : '') + st.monthPlate16Net.toLocaleString('tr-TR') + '₺', '#246B3D'],
+                         [st.yr + ' toplam net', (st.yPpotential >= 0 ? '+' : '') + st.yPpotential.toLocaleString('tr-TR') + '₺', '#246B3D']].map(([l, v, col]) => (React.createElement("div", { key: l, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid #F0EBE3' } },
+                            React.createElement("span", { style: { fontSize: 11, color: '#8C857D', fontWeight: 600 } }, l),
+                            React.createElement("span", { style: { fontSize: 12, fontWeight: 800, color: col } }, v)))),
+                        st.ym.length > 0 && React.createElement("div", { style: { marginTop: 8 } },
+                            React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: '#8C857D', marginBottom: 6, letterSpacing: .4, textTransform: 'uppercase' } }, st.yr + ' aylık dağılım'),
+                            st.ym.map(m => React.createElement("div", { key: m.key, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0' } },
+                                React.createElement("span", { style: { fontSize: 10, color: '#8C857D', textTransform: 'capitalize' } }, m.label + ' (' + m.count + ')'),
+                                React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: m.net >= 0 ? '#246B3D' : '#A33A3A' } }, (m.net >= 0 ? '+' : '') + m.net.toLocaleString('tr-TR') + '₺')))))),
                 visibleListRows.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', paddingTop: 40 } },
                     React.createElement("div", { style: { fontSize: 46, marginBottom: 8 } }, "✈️"),
                     React.createElement("div", { style: { fontWeight: 700, fontSize: 14, color: SB } }, T.length === 0 ? 'Henüz transfer yok' : 'Sonuç bulunamadı'),
@@ -2392,39 +2447,45 @@ function App() {
             React.createElement("div", { style: { maxWidth: 520, margin: '0 auto', padding: '8px 14px 4px' } },
                 /* Açılır detay panel */
                 openKarPanel && React.createElement("div", { style: { padding: '10px 2px 12px', borderBottom: '1px solid rgba(255,255,255,.12)', marginBottom: 8 } },
-                    React.createElement("div", { style: { fontSize: 9, color: 'rgba(255,255,255,.55)', fontWeight: 800, letterSpacing: .6, marginBottom: 6 } }, "BU AY (" + new Date().toLocaleDateString('tr-TR', { month: 'long' }).toUpperCase() + ")"),
+                    React.createElement("div", { style: { fontSize: 9, color: 'rgba(255,255,255,.55)', fontWeight: 800, letterSpacing: .6, marginBottom: 6 } }, "BU AY (" + new Date().toLocaleDateString('tr-TR', { month: 'long' }).toUpperCase() + ") — TOPLAM KÂR"),
                     React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 } },
                         React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
                             React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "ÖLMEZTUR"),
-                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthExternalNet >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.monthExternalNet >= 0 ? '+' : '') + st.monthExternalNet.toLocaleString('tr-TR') + '₺')),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthExternalPotential >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.monthExternalPotential >= 0 ? '+' : '') + st.monthExternalPotential.toLocaleString('tr-TR') + '₺'),
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Alınan: " + (st.monthExternalNet >= 0 ? '+' : '') + st.monthExternalNet.toLocaleString('tr-TR') + '₺')),
                         React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
                             React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "🚐 16 LMZ 55"),
-                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthPlate16Net >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.monthPlate16Net >= 0 ? '+' : '') + st.monthPlate16Net.toLocaleString('tr-TR') + '₺')),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthPlate16Net >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.monthPlate16Net >= 0 ? '+' : '') + st.monthPlate16Net.toLocaleString('tr-TR') + '₺'),
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Gider sonrası")),
                         React.createElement("div", { style: { background: 'rgba(255,255,255,.14)', borderRadius: 8, padding: '7px 4px', textAlign: 'center', border: '1px solid rgba(255,255,255,.15)' } },
                             React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.75)', fontWeight: 800, letterSpacing: .3, marginBottom: 2 } }, "TOPLAM"),
-                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.mP >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.mP >= 0 ? '+' : '') + st.mP.toLocaleString('tr-TR') + '₺'))),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.mPpotential >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.mPpotential >= 0 ? '+' : '') + st.mPpotential.toLocaleString('tr-TR') + '₺'),
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Tahsil: " + (st.mP >= 0 ? '+' : '') + st.mP.toLocaleString('tr-TR') + '₺'))),
                     /* Yıllık */
-                    React.createElement("div", { style: { fontSize: 9, color: 'rgba(255,255,255,.55)', fontWeight: 800, letterSpacing: .6, marginBottom: 6 } }, st.yr + " YILI"),
+                    React.createElement("div", { style: { fontSize: 9, color: 'rgba(255,255,255,.55)', fontWeight: 800, letterSpacing: .6, marginBottom: 6 } }, st.yr + " YILI — TOPLAM KÂR"),
                     React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 } },
                         React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
                             React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "ÖLMEZTUR"),
-                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.yearExternalNet >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.yearExternalNet >= 0 ? '+' : '') + st.yearExternalNet.toLocaleString('tr-TR') + '₺')),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.yearExternalPotential >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.yearExternalPotential >= 0 ? '+' : '') + st.yearExternalPotential.toLocaleString('tr-TR') + '₺'),
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Alınan: " + (st.yearExternalNet >= 0 ? '+' : '') + st.yearExternalNet.toLocaleString('tr-TR') + '₺')),
                         React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
                             React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "🚐 16 LMZ 55"),
-                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.yearPlate16Net >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.yearPlate16Net >= 0 ? '+' : '') + st.yearPlate16Net.toLocaleString('tr-TR') + '₺')),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.yearPlate16Net >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.yearPlate16Net >= 0 ? '+' : '') + st.yearPlate16Net.toLocaleString('tr-TR') + '₺'),
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Gider sonrası")),
                         React.createElement("div", { style: { background: 'rgba(255,255,255,.14)', borderRadius: 8, padding: '7px 4px', textAlign: 'center', border: '1px solid rgba(255,255,255,.15)' } },
                             React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.75)', fontWeight: 800, letterSpacing: .3, marginBottom: 2 } }, "TOPLAM"),
-                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.yP >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.yP >= 0 ? '+' : '') + st.yP.toLocaleString('tr-TR') + '₺')))),
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.yPpotential >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.yPpotential >= 0 ? '+' : '') + st.yPpotential.toLocaleString('tr-TR') + '₺'),
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Tahsil: " + (st.yP >= 0 ? '+' : '') + st.yP.toLocaleString('tr-TR') + '₺')))),
                 /* Özet satır — her zaman görünür, tıklanabilir */
                 React.createElement("div", { onClick: () => setOpenKarPanel(v => !v), style: { display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none' } },
                     [[T.length, 'TOPLAM', '#fff'], [st.tam, 'TAM', '#A8E6B4'], [st.bos, 'BOŞ', '#EFDDBE'], [st.ipt, 'İPTAL', '#ECCFCF']].map(([v, l, col]) => (React.createElement("div", { key: l, style: { flex: 1, textAlign: 'center' } },
                         React.createElement("div", { style: { fontSize: 15, fontWeight: 800, color: col, lineHeight: 1 } }, v),
                         React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.4)', fontWeight: 700, letterSpacing: .4, marginTop: 1 } }, l)))),
                     React.createElement("div", { style: { width: 1, height: 30, background: 'rgba(255,255,255,.15)', flexShrink: 0 } }),
-                    /* Ölmeztur aylık */
+                    /* Ölmeztur aylık (ödeme durumundan bağımsız potansiyel kâr) */
                     React.createElement("div", { style: { flex: 1.4, textAlign: 'right' } },
                         React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3 } }, "ÖLMEZTUR"),
-                        React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthExternalNet >= 0 ? '#A8E6B4' : '#ECCFCF', lineHeight: 1.15 } }, (st.monthExternalNet >= 0 ? '+' : '') + st.monthExternalNet.toLocaleString('tr-TR') + '₺')),
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthExternalPotential >= 0 ? '#A8E6B4' : '#ECCFCF', lineHeight: 1.15 } }, (st.monthExternalPotential >= 0 ? '+' : '') + st.monthExternalPotential.toLocaleString('tr-TR') + '₺')),
                     /* 16 LMZ 55 aylık */
                     React.createElement("div", { style: { flex: 1.4, textAlign: 'right' } },
                         React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3 } }, "🚐 16 LMZ 55"),
