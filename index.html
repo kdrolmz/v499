@@ -654,6 +654,7 @@ function AracTab({ tip, aracK, setAracK }) {
     const [showSL, setShowSL] = useState(false);
     const [showFL, setShowFL] = useState(false);
     const [openYearly, setOpenYearly] = useState(false);
+    const [openMonth, setOpenMonth] = useState(new Date().toISOString().slice(0, 7));
     const soforOner = sf.sofor ? kayitliSoforler.filter(s => s.toLowerCase().includes(sf.sofor.toLowerCase())) : kayitliSoforler;
     const firmaOner = sf.isVeren ? kayitliFirmalar.filter(f => f.toLowerCase().includes(sf.isVeren.toLowerCase())) : kayitliFirmalar;
     const sKaydet = n => { if (!n.trim())
@@ -804,88 +805,108 @@ function AracTab({ tip, aracK, setAracK }) {
         msf.length === 0 && !showForm && (React.createElement("div", { style: { textAlign: 'center', padding: '30px 0', color: SB } },
             React.createElement("div", { style: { fontSize: 36, marginBottom: 8 } }, "\uD83D\uDE90"),
             React.createElement("div", { style: { fontSize: 13, fontWeight: 600 } }, "Bu ay sefer kayd\u0131 yok"))),
-        Object.entries(gunler).map(([tarih, seferler]) => {
-            const gunNet = Math.round(seferler.reduce((acc, s) => { const gd = sGider(s.id); const gt = gd.reduce((x, k) => x + (parseFloat(k.tutar) || 0), 0); return acc + (parseFloat(s.arac) || 0) - gt; }, 0));
-            const gunGid = Math.round(seferler.reduce((acc, s) => acc + sGider(s.id).reduce((x, k) => x + (parseFloat(k.tutar) || 0), 0), 0));
-            const gunAcik = expanded['g_' + tarih];
-            const tarihL = new Date(tarih).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
-            return (React.createElement("div", { key: tarih, style: { display: 'flex', flexDirection: 'column', gap: 6 } },
-                React.createElement("button", { onClick: () => setExpanded(p => ({ ...p, ['g_' + tarih]: !p['g_' + tarih] })), style: { width: '100%', background: gunAcik ? NAV : '#fff', border: '1px solid ' + (gunAcik ? NAV : BOR), borderRadius: 12, padding: '11px 14px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 1px 6px rgba(60,52,38,.06)' } },
-                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
-                        React.createElement("div", null,
-                            React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: gunAcik ? '#fff' : TX } }, tarihL),
-                            React.createElement("div", { style: { fontSize: 11, color: gunAcik ? 'rgba(255,255,255,.65)' : SB, marginTop: 2 } },
-                                seferler.length,
-                                " sefer",
-                                gunGid > 0 ? ' · Gider: -' + fr(gunGid) + '₺' : '')),
-                        React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } },
-                            React.createElement("div", { style: { fontSize: 16, fontWeight: 800, color: gunAcik ? '#fff' : gunNet >= 0 ? G : R } },
-                                fn(gunNet),
-                                "\u20BA"),
-                            React.createElement("span", { style: { color: gunAcik ? 'rgba(255,255,255,.6)' : SB, fontSize: 14 } }, gunAcik ? '▲' : '▼')))),
-                gunAcik && seferler.map(sefer => {
-                    const gd = sGider(sefer.id);
-                    const gTop = Math.round(gd.reduce((s, k) => s + (parseFloat(k.tutar) || 0), 0));
-                    const sNet = (parseFloat(sefer.arac) || 0) - gTop;
-                    const isOpen = expanded[sefer.id];
-                    const isAddG = addGiderId === sefer.id;
-                    return (React.createElement("div", { key: sefer.id, style: { marginLeft: 12, background: '#fff', borderRadius: 11, border: '1px solid ' + BOR, overflow: 'hidden' } },
-                        React.createElement("div", { style: { padding: '10px 13px', cursor: 'pointer' }, onClick: () => toggle(sefer.id) },
-                            React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } },
-                                React.createElement("div", { style: { flex: 1, marginRight: 8 } },
-                                    sefer.isVeren && React.createElement("span", { style: { background: INP, color: NAV, borderRadius: 5, padding: '1px 6px', fontSize: 9, fontWeight: 700, marginBottom: 3, display: 'inline-block' } }, sefer.isVeren),
-                                    React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: TX } },
-                                        sefer.yolcu || 'Sefer',
-                                        sefer.guzergah && React.createElement("span", { style: { fontSize: 11, color: SB, fontWeight: 500, marginLeft: 5 } },
-                                            "\u00B7 ",
-                                            sefer.guzergah)),
-                                    React.createElement("div", { style: { fontSize: 11, color: SB, marginTop: 2 } },
-                                        sefer.sofor && React.createElement("span", null,
-                                            "👨🏻‍✈️ ",
-                                            sefer.sofor,
-                                            " \u00B7 "),
-                                        "+",
-                                        fr(sefer.arac),
-                                        "\u20BA",
-                                        gd.length > 0 && React.createElement("span", { style: { color: BR } },
-                                            " \u00B7 -",
-                                            fr(gTop),
-                                            "\u20BA"))),
-                                React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 } },
-                                    React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: sNet >= 0 ? G : R } },
-                                        fn(sNet),
-                                        "\u20BA"),
-                                    React.createElement("span", { style: { color: SB, fontSize: 12 } }, isOpen ? '▲' : '▼')))),
-                        isOpen && (React.createElement("div", { style: { borderTop: '1px solid ' + BOR, padding: '10px 13px', background: INP } },
-                            gd.length > 0 && (React.createElement("div", { style: { marginBottom: 10 } }, gd.map(k => { const cat = GIDER_KAT.find(c => c.id === k.kat); return (React.createElement("div", { key: k.id, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: '1px solid ' + BOR } },
-                                React.createElement("span", { style: { fontSize: 12, color: TX } },
-                                    cat ? cat.ico + ' ' + cat.n : 'Gider',
-                                    k.not ? ' · ' + k.not : ''),
-                                React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 6 } },
-                                    React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: BR } },
-                                        "-",
-                                        fr(k.tutar),
-                                        "\u20BA"),
-                                    React.createElement("button", { onClick: () => silGider(k.id), style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: R } }, "\u2715")))); }))),
-                            React.createElement("div", { style: { background: sNet >= 0 ? '#E8F5ED' : '#F8EBEB', borderRadius: 9, padding: '8px 12px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-                                React.createElement("span", { style: { fontSize: 11, color: SB, fontWeight: 600 } }, "Net K\u00E2r"),
-                                React.createElement("span", { style: { fontSize: 18, fontWeight: 800, color: sNet >= 0 ? G : R } },
-                                    fn(sNet),
-                                    "\u20BA")),
-                            isAddG ? (React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 10 } },
-                                React.createElement("input", { type: "number", value: gf.tutar, onChange: e => setGf(p => ({ ...p, tutar: e.target.value })), placeholder: "Tutar (\u20BA)", className: "inp" }),
-                                React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 5 } }, GIDER_KAT.map(cat => (React.createElement("button", { key: cat.id, onClick: () => setGf(p => ({ ...p, kat: cat.id })), style: { background: gf.kat === cat.id ? NAV : BOR, color: gf.kat === cat.id ? '#fff' : TX, border: 'none', borderRadius: 8, padding: '6px 3px', cursor: 'pointer', fontSize: '10px', fontWeight: 700, textAlign: 'center' } },
-                                    React.createElement("div", { style: { fontSize: 13 } }, cat.ico),
-                                    cat.n)))),
-                                React.createElement("input", { type: "text", value: gf.not, onChange: e => setGf(p => ({ ...p, not: e.target.value })), placeholder: "Not", className: "inp" }),
-                                React.createElement("div", { style: { display: 'flex', gap: 7 } },
-                                    React.createElement("button", { onClick: () => kaydetGider(sefer.id), style: { flex: 1, background: R, color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontWeight: 700, cursor: 'pointer' } }, "\u2713 Kaydet"),
-                                    React.createElement("button", { onClick: () => { setAddGiderId(null); setGf({ kat: 'fuel', tutar: '', not: '' }); }, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 10, padding: '0 14px', cursor: 'pointer', fontSize: 16 } }, "\u2715")))) : (React.createElement("button", { onClick: () => { setAddGiderId(sefer.id); setGf({ kat: 'fuel', tutar: '', not: '' }); }, style: { width: '100%', background: '#fff', color: BR, border: '1.5px dashed ' + BOR, borderRadius: 9, padding: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', marginBottom: 10 } }, "+ Gider Ekle")),
-                            React.createElement("div", { style: { display: 'flex', gap: 6 } },
-                                React.createElement("button", { onClick: () => duzenle(sefer), style: { flex: 1, background: '#fff', color: NAV, border: '1px solid ' + BOR, borderRadius: 9, padding: '8px 0', fontWeight: 700, fontSize: '12px', cursor: 'pointer' } }, "\u270F\uFE0F D\u00FCzenle"),
-                                React.createElement("button", { onClick: () => silSefer(sefer.id), style: { flex: 1, background: '#F8EBEB', color: R, border: 'none', borderRadius: 9, padding: '8px 0', fontWeight: 700, fontSize: '12px', cursor: 'pointer' } }, "\uD83D\uDDD1\uFE0F Sil"))))));
-                })));
-        }),
+        /* ── AYLIK AÇILIR PANEL ── */
+        yilAylari.length > 0 && React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
+            yilAylari.map(ayItem => {
+                const mAcik = openMonth === ayItem.key;
+                const ayMsf = aracK.filter(k => k.type === 'sefer' && k.date && k.date.startsWith(ayItem.key));
+                const ayGunler = {};
+                [...ayMsf].sort((a, b) => a.date < b.date ? -1 : 1).forEach(s => { if (!ayGunler[s.date])
+                    ayGunler[s.date] = []; ayGunler[s.date].push(s); });
+                return React.createElement("div", { key: ayItem.key, style: { display: 'flex', flexDirection: 'column', gap: 6 } },
+                    React.createElement("button", { onClick: () => { setOpenMonth(mAcik ? '' : ayItem.key); setAy(ayItem.key); }, style: { width: '100%', background: mAcik ? 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')' : '#fff', border: '1px solid ' + (mAcik ? NAV : BOR), borderRadius: 13, padding: '13px 15px', cursor: 'pointer', textAlign: 'left', boxShadow: mAcik ? '0 4px 14px rgba(60,52,38,.15)' : '0 1px 6px rgba(60,52,38,.05)' } },
+                        React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
+                            React.createElement("div", null,
+                                React.createElement("div", { style: { fontSize: 15, fontWeight: 800, color: mAcik ? '#fff' : TX, textTransform: 'capitalize' } }, '📅 ' + ayItem.ad),
+                                React.createElement("div", { style: { fontSize: 11, color: mAcik ? 'rgba(255,255,255,.7)' : SB, marginTop: 2 } },
+                                    ayItem.sefer + ' sefer · +' + fr(ayItem.gelir) + '₺ · -' + fr(ayItem.gider) + '₺')),
+                            React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+                                React.createElement("div", { style: { fontSize: 16, fontWeight: 800, color: mAcik ? '#fff' : ayItem.net >= 0 ? G : R } }, fn(ayItem.net) + '₺'),
+                                React.createElement("span", { style: { fontSize: 14, color: mAcik ? 'rgba(255,255,255,.7)' : SB } }, mAcik ? '▲' : '▼')))),
+                    mAcik && React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 6 } },
+                        Object.entries(ayGunler).map(([tarih, seferler]) => {
+                            const gunNet = Math.round(seferler.reduce((acc, s) => { const gd = sGider(s.id); const gt = gd.reduce((x, k) => x + (parseFloat(k.tutar) || 0), 0); return acc + (parseFloat(s.arac) || 0) - gt; }, 0));
+                            const gunGid = Math.round(seferler.reduce((acc, s) => acc + sGider(s.id).reduce((x, k) => x + (parseFloat(k.tutar) || 0), 0), 0));
+                            const gunAcik = expanded['g_' + tarih];
+                            const tarihL = new Date(tarih).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+                            return (React.createElement("div", { key: tarih, style: { display: 'flex', flexDirection: 'column', gap: 6 } },
+                                React.createElement("button", { onClick: () => setExpanded(p => ({ ...p, ['g_' + tarih]: !p['g_' + tarih] })), style: { width: '100%', background: gunAcik ? '#3D2E24' : '#fff', border: '1px solid ' + (gunAcik ? '#3D2E24' : BOR), borderRadius: 11, padding: '10px 13px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 1px 4px rgba(60,52,38,.05)' } },
+                                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
+                                        React.createElement("div", null,
+                                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: gunAcik ? '#fff' : TX } }, tarihL),
+                                            React.createElement("div", { style: { fontSize: 10, color: gunAcik ? 'rgba(255,255,255,.65)' : SB, marginTop: 2 } },
+                                                seferler.length,
+                                                " sefer",
+                                                gunGid > 0 ? ' · Gider: -' + fr(gunGid) + '₺' : '')),
+                                        React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+                                            React.createElement("div", { style: { fontSize: 15, fontWeight: 800, color: gunAcik ? '#fff' : gunNet >= 0 ? G : R } },
+                                                fn(gunNet),
+                                                "\u20BA"),
+                                            React.createElement("span", { style: { color: gunAcik ? 'rgba(255,255,255,.6)' : SB, fontSize: 13 } }, gunAcik ? '▲' : '▼')))),
+                                gunAcik && seferler.map(sefer => {
+                                    const gd = sGider(sefer.id);
+                                    const gTop = Math.round(gd.reduce((s, k) => s + (parseFloat(k.tutar) || 0), 0));
+                                    const sNet = (parseFloat(sefer.arac) || 0) - gTop;
+                                    const isOpen = expanded[sefer.id];
+                                    const isAddG = addGiderId === sefer.id;
+                                    return (React.createElement("div", { key: sefer.id, style: { marginLeft: 12, background: '#fff', borderRadius: 11, border: '1px solid ' + BOR, overflow: 'hidden' } },
+                                        React.createElement("div", { style: { padding: '10px 13px', cursor: 'pointer' }, onClick: () => toggle(sefer.id) },
+                                            React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } },
+                                                React.createElement("div", { style: { flex: 1, marginRight: 8 } },
+                                                    sefer.isVeren && React.createElement("span", { style: { background: INP, color: NAV, borderRadius: 5, padding: '1px 6px', fontSize: 9, fontWeight: 700, marginBottom: 3, display: 'inline-block' } }, sefer.isVeren),
+                                                    React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: TX } },
+                                                        sefer.yolcu || 'Sefer',
+                                                        sefer.guzergah && React.createElement("span", { style: { fontSize: 11, color: SB, fontWeight: 500, marginLeft: 5 } },
+                                                            "\u00B7 ",
+                                                            sefer.guzergah)),
+                                                    React.createElement("div", { style: { fontSize: 11, color: SB, marginTop: 2 } },
+                                                        sefer.sofor && React.createElement("span", null,
+                                                            "👨🏻‍✈️ ",
+                                                            sefer.sofor,
+                                                            " \u00B7 "),
+                                                        "+",
+                                                        fr(sefer.arac),
+                                                        "\u20BA",
+                                                        gd.length > 0 && React.createElement("span", { style: { color: BR } },
+                                                            " \u00B7 -",
+                                                            fr(gTop),
+                                                            "\u20BA"))),
+                                                React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 } },
+                                                    React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: sNet >= 0 ? G : R } },
+                                                        fn(sNet),
+                                                        "\u20BA"),
+                                                    React.createElement("span", { style: { color: SB, fontSize: 12 } }, isOpen ? '▲' : '▼')))),
+                                        isOpen && (React.createElement("div", { style: { borderTop: '1px solid ' + BOR, padding: '10px 13px', background: INP } },
+                                            gd.length > 0 && (React.createElement("div", { style: { marginBottom: 10 } }, gd.map(k => { const cat = GIDER_KAT.find(c => c.id === k.kat); return (React.createElement("div", { key: k.id, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: '1px solid ' + BOR } },
+                                                React.createElement("span", { style: { fontSize: 12, color: TX } },
+                                                    cat ? cat.ico + ' ' + cat.n : 'Gider',
+                                                    k.not ? ' · ' + k.not : ''),
+                                                React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 6 } },
+                                                    React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: BR } },
+                                                        "-",
+                                                        fr(k.tutar),
+                                                        "\u20BA"),
+                                                    React.createElement("button", { onClick: () => silGider(k.id), style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: R } }, "\u2715")))); }))),
+                                            React.createElement("div", { style: { background: sNet >= 0 ? '#E8F5ED' : '#F8EBEB', borderRadius: 9, padding: '8px 12px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                                                React.createElement("span", { style: { fontSize: 11, color: SB, fontWeight: 600 } }, "Net K\u00E2r"),
+                                                React.createElement("span", { style: { fontSize: 18, fontWeight: 800, color: sNet >= 0 ? G : R } },
+                                                    fn(sNet),
+                                                    "\u20BA")),
+                                            isAddG ? (React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 10 } },
+                                                React.createElement("input", { type: "number", value: gf.tutar, onChange: e => setGf(p => ({ ...p, tutar: e.target.value })), placeholder: "Tutar (\u20BA)", className: "inp" }),
+                                                React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 5 } }, GIDER_KAT.map(cat => (React.createElement("button", { key: cat.id, onClick: () => setGf(p => ({ ...p, kat: cat.id })), style: { background: gf.kat === cat.id ? NAV : BOR, color: gf.kat === cat.id ? '#fff' : TX, border: 'none', borderRadius: 8, padding: '6px 3px', cursor: 'pointer', fontSize: '10px', fontWeight: 700, textAlign: 'center' } },
+                                                    React.createElement("div", { style: { fontSize: 13 } }, cat.ico),
+                                                    cat.n)))),
+                                                React.createElement("input", { type: "text", value: gf.not, onChange: e => setGf(p => ({ ...p, not: e.target.value })), placeholder: "Not", className: "inp" }),
+                                                React.createElement("div", { style: { display: 'flex', gap: 7 } },
+                                                    React.createElement("button", { onClick: () => kaydetGider(sefer.id), style: { flex: 1, background: R, color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontWeight: 700, cursor: 'pointer' } }, "\u2713 Kaydet"),
+                                                    React.createElement("button", { onClick: () => { setAddGiderId(null); setGf({ kat: 'fuel', tutar: '', not: '' }); }, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 10, padding: '0 14px', cursor: 'pointer', fontSize: 16 } }, "\u2715")))) : (React.createElement("button", { onClick: () => { setAddGiderId(sefer.id); setGf({ kat: 'fuel', tutar: '', not: '' }); }, style: { width: '100%', background: '#fff', color: BR, border: '1.5px dashed ' + BOR, borderRadius: 9, padding: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', marginBottom: 10 } }, "+ Gider Ekle")),
+                                            React.createElement("div", { style: { display: 'flex', gap: 6 } },
+                                                React.createElement("button", { onClick: () => duzenle(sefer), style: { flex: 1, background: '#fff', color: NAV, border: '1px solid ' + BOR, borderRadius: 9, padding: '8px 0', fontWeight: 700, fontSize: '12px', cursor: 'pointer' } }, "\u270F\uFE0F D\u00FCzenle"),
+                                                React.createElement("button", { onClick: () => silSefer(sefer.id), style: { flex: 1, background: '#F8EBEB', color: R, border: 'none', borderRadius: 9, padding: '8px 0', fontWeight: 700, fontSize: '12px', cursor: 'pointer' } }, "\uD83D\uDDD1\uFE0F Sil"))))));
+                                })));
+                        })));
+            })),
         msf.length > 0 && (React.createElement("button", { onClick: () => {
                 const sorted = [...msf].sort((a, b) => a.date < b.date ? -1 : 1);
                 const rows = sorted.map((s, i) => { const gd2 = sGider(s.id); const gt = Math.round(gd2.reduce((x, k) => x + (parseFloat(k.tutar) || 0), 0)); const sn = (parseFloat(s.arac) || 0) - gt; return (i + 1) + '. ' + new Date(s.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) + ' ' + (s.yolcu || 'Sefer') + (s.isVeren ? ' (' + s.isVeren + ')' : '') + ' | +' + fr(s.arac) + '₺ -' + fr(gt) + '₺ Net:' + fn(sn) + '₺'; }).join('\n');
@@ -1738,32 +1759,53 @@ function App() {
             const key = yr + '-' + String(i + 1).padStart(2, '0');
             const ext = externalMonthBreakdown(key);
             const ar = plate16MonthBreakdown(key);
+            /* Kartlarda görünen rakamların BİREBİR toplamı:
+               - "💰 Ölmeztur Net" etiketli kartlar → isPlate16Transfer=false olanlar
+               - Her transferin olmezPotentialKar değeri kartta nasıl yuvarlandıysa öyle toplanıyor */
+            const ayTransferleri = T.filter(t => t.date && String(t.date).slice(0, 7) === key);
+            const olmezKartToplami = ayTransferleri
+                .filter(t => !isPlate16Transfer(t))
+                .reduce((s, t) => s + Math.round(olmezPotentialKar(t)), 0);
             return {
                 key,
+                monthIndex: i,
+                monthName: new Date(key + '-01').toLocaleDateString('tr-TR', { month: 'long' }),
                 label: new Date(key + '-01').toLocaleDateString('tr-TR', { month: 'long' }) + ' · Dış ' + (ext.net >= 0 ? '+' : '') + ext.net.toLocaleString('tr-TR') + '₺ · 16LMZ55 ' + (ar.net >= 0 ? '+' : '') + ar.net.toLocaleString('tr-TR') + '₺',
+                extNet: ext.net,
+                extPotential: ext.potentialNet,
+                olmezKartSum: olmezKartToplami,
+                arNet: ar.net,
                 net: ext.net + ar.net,
+                potentialNet: olmezKartToplami + ar.net,
                 count: ext.count + ar.count
             };
-        }).filter(m => m.count > 0 || m.net !== 0);
+        }).filter(m => m.count > 0 || m.net !== 0 || m.olmezKartSum !== 0);
+        /* Kartlarda görünen Ölmeztur Net toplamları (kartla birebir aynı) */
+        const monthOlmezKartSum = T
+            .filter(t => t.date && String(t.date).slice(0, 7) === ayStr && !isPlate16Transfer(t))
+            .reduce((s, t) => s + Math.round(olmezPotentialKar(t)), 0);
+        const yearOlmezKartSum = T
+            .filter(t => new Date(t.date).getFullYear() === yr && !isPlate16Transfer(t))
+            .reduce((s, t) => s + Math.round(olmezPotentialKar(t)), 0);
         return {
             tot: T.length,
             tam: T.filter(t => t.status === 'tam').length,
             bos: T.filter(t => t.status === 'bos').length,
             ipt: T.filter(t => t.status === 'iptal').length,
             mP: extAy.net + arAy.net,
-            mPpotential: extAy.potentialNet + arAy.net,
+            mPpotential: monthOlmezKartSum + arAy.net,
             lP: extLast.net,
             yP: extYil + arYil,
-            yPpotential: extYilPotential + arYil,
+            yPpotential: yearOlmezKartSum + arYil,
             mC: mT.length,
             yr,
             mPaid: mT.filter(t => getCollectionState(t) === 'collected').length,
             mUnpaid: mT.filter(t => getCollectionState(t) === 'uncollected').length,
             monthExternalNet: extAy.net,
-            monthExternalPotential: extAy.potentialNet,
+            monthExternalPotential: monthOlmezKartSum,
             monthPlate16Net: arAy.net,
             yearExternalNet: extYil,
-            yearExternalPotential: extYilPotential,
+            yearExternalPotential: yearOlmezKartSum,
             yearPlate16Net: arYil,
             ym
         };
@@ -2446,26 +2488,12 @@ function App() {
         React.createElement("div", { className: "sb", style: { position: 'fixed', bottom: 0, left: 0, right: 0, background: '#686868', borderTop: '1px solid rgba(255,255,255,.1)', boxShadow: '0 -2px 20px rgba(0,0,0,.3)' } },
             React.createElement("div", { style: { maxWidth: 520, margin: '0 auto', padding: '8px 14px 4px' } },
                 /* Açılır detay panel */
-                openKarPanel && React.createElement("div", { style: { padding: '10px 2px 12px', borderBottom: '1px solid rgba(255,255,255,.12)', marginBottom: 8 } },
-                    React.createElement("div", { style: { fontSize: 9, color: 'rgba(255,255,255,.55)', fontWeight: 800, letterSpacing: .6, marginBottom: 6 } }, "BU AY (" + new Date().toLocaleDateString('tr-TR', { month: 'long' }).toUpperCase() + ") — TOPLAM KÂR"),
-                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 } },
-                        React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
-                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "ÖLMEZTUR"),
-                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthExternalPotential >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.monthExternalPotential >= 0 ? '+' : '') + st.monthExternalPotential.toLocaleString('tr-TR') + '₺'),
-                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Alınan: " + (st.monthExternalNet >= 0 ? '+' : '') + st.monthExternalNet.toLocaleString('tr-TR') + '₺')),
-                        React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
-                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "🚐 16 LMZ 55"),
-                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.monthPlate16Net >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.monthPlate16Net >= 0 ? '+' : '') + st.monthPlate16Net.toLocaleString('tr-TR') + '₺'),
-                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Gider sonrası")),
-                        React.createElement("div", { style: { background: 'rgba(255,255,255,.14)', borderRadius: 8, padding: '7px 4px', textAlign: 'center', border: '1px solid rgba(255,255,255,.15)' } },
-                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.75)', fontWeight: 800, letterSpacing: .3, marginBottom: 2 } }, "TOPLAM"),
-                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.mPpotential >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.mPpotential >= 0 ? '+' : '') + st.mPpotential.toLocaleString('tr-TR') + '₺'),
-                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Tahsil: " + (st.mP >= 0 ? '+' : '') + st.mP.toLocaleString('tr-TR') + '₺'))),
-                    /* Yıllık */
+                openKarPanel && React.createElement("div", { style: { padding: '10px 2px 12px', borderBottom: '1px solid rgba(255,255,255,.12)', marginBottom: 8, maxHeight: '60vh', overflowY: 'auto' } },
+                    /* Yıllık toplam başlık */
                     React.createElement("div", { style: { fontSize: 9, color: 'rgba(255,255,255,.55)', fontWeight: 800, letterSpacing: .6, marginBottom: 6 } }, st.yr + " YILI — TOPLAM KÂR"),
-                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 } },
+                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 14 } },
                         React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
-                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "ÖLMEZTUR"),
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 700, letterSpacing: .3, marginBottom: 2 } }, "💰 ÖLMEZTUR"),
                             React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.yearExternalPotential >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.yearExternalPotential >= 0 ? '+' : '') + st.yearExternalPotential.toLocaleString('tr-TR') + '₺'),
                             React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Alınan: " + (st.yearExternalNet >= 0 ? '+' : '') + st.yearExternalNet.toLocaleString('tr-TR') + '₺')),
                         React.createElement("div", { style: { background: 'rgba(255,255,255,.08)', borderRadius: 8, padding: '7px 4px', textAlign: 'center' } },
@@ -2475,7 +2503,27 @@ function App() {
                         React.createElement("div", { style: { background: 'rgba(255,255,255,.14)', borderRadius: 8, padding: '7px 4px', textAlign: 'center', border: '1px solid rgba(255,255,255,.15)' } },
                             React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.75)', fontWeight: 800, letterSpacing: .3, marginBottom: 2 } }, "TOPLAM"),
                             React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: st.yPpotential >= 0 ? '#A8E6B4' : '#ECCFCF' } }, (st.yPpotential >= 0 ? '+' : '') + st.yPpotential.toLocaleString('tr-TR') + '₺'),
-                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Tahsil: " + (st.yP >= 0 ? '+' : '') + st.yP.toLocaleString('tr-TR') + '₺')))),
+                            React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 600, marginTop: 2 } }, "Tahsil: " + (st.yP >= 0 ? '+' : '') + st.yP.toLocaleString('tr-TR') + '₺'))),
+                    /* Aylık bazda dağılım — Ölmeztur | 16 LMZ 55 | Toplam */
+                    React.createElement("div", { style: { fontSize: 9, color: 'rgba(255,255,255,.55)', fontWeight: 800, letterSpacing: .6, marginBottom: 6 } }, "AYLIK DAĞILIM"),
+                    React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '58px 1fr 1fr 1fr', gap: 4, padding: '4px 6px', marginBottom: 4, background: 'rgba(255,255,255,.04)', borderRadius: 6 } },
+                        React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 700, letterSpacing: .3 } }, "AY"),
+                        React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 700, letterSpacing: .3, textAlign: 'right' } }, "💰 ÖLMEZTUR"),
+                        React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.42)', fontWeight: 700, letterSpacing: .3, textAlign: 'right' } }, "🚐 16LMZ55"),
+                        React.createElement("div", { style: { fontSize: 8, color: 'rgba(255,255,255,.55)', fontWeight: 800, letterSpacing: .3, textAlign: 'right' } }, "TOPLAM")),
+                    st.ym.length === 0
+                        ? React.createElement("div", { style: { fontSize: 11, color: 'rgba(255,255,255,.5)', textAlign: 'center', padding: '12px 0' } }, "Bu yıl için kayıt yok")
+                        : React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 3 } },
+                            st.ym.map(m => {
+                                const curMo = new Date().getMonth();
+                                const curYr = new Date().getFullYear();
+                                const isCurrent = m.monthIndex === curMo && st.yr === curYr;
+                                return React.createElement("div", { key: m.key, style: { display: 'grid', gridTemplateColumns: '58px 1fr 1fr 1fr', gap: 4, padding: '6px 6px', background: isCurrent ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.05)', borderRadius: 6, border: isCurrent ? '1px solid rgba(255,255,255,.18)' : '1px solid transparent' } },
+                                    React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: '#fff', textTransform: 'capitalize', alignSelf: 'center', lineHeight: 1 } }, m.monthName.slice(0, 3) + '.'),
+                                    React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: m.olmezKartSum >= 0 ? '#A8E6B4' : '#ECCFCF', textAlign: 'right', alignSelf: 'center', lineHeight: 1 } }, (m.olmezKartSum >= 0 ? '+' : '') + m.olmezKartSum.toLocaleString('tr-TR') + '₺'),
+                                    React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: m.arNet >= 0 ? '#A8E6B4' : '#ECCFCF', textAlign: 'right', alignSelf: 'center', lineHeight: 1 } }, (m.arNet >= 0 ? '+' : '') + m.arNet.toLocaleString('tr-TR') + '₺'),
+                                    React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: m.potentialNet >= 0 ? '#FFF' : '#ECCFCF', textAlign: 'right', alignSelf: 'center', lineHeight: 1 } }, (m.potentialNet >= 0 ? '+' : '') + m.potentialNet.toLocaleString('tr-TR') + '₺'));
+                            }))),
                 /* Özet satır — her zaman görünür, tıklanabilir */
                 React.createElement("div", { onClick: () => setOpenKarPanel(v => !v), style: { display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none' } },
                     [[T.length, 'TOPLAM', '#fff'], [st.tam, 'TAM', '#A8E6B4'], [st.bos, 'BOŞ', '#EFDDBE'], [st.ipt, 'İPTAL', '#ECCFCF']].map(([v, l, col]) => (React.createElement("div", { key: l, style: { flex: 1, textAlign: 'center' } },
