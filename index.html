@@ -2146,7 +2146,8 @@ function App() {
             )
         );
     };
-    const renderTransferList = () => {
+const renderTransferList = () => {
+        // 1. GÜNLERİ VE TRANSFER KARTLARINI ÇİZEN BÖLÜM (AKORDEON)
         const renderSectionDays = rows => {
             const dayMap = rows.reduce((acc, t) => {
                 const dayKey = t.date || 'Tarihsiz';
@@ -2201,6 +2202,7 @@ function App() {
             }));
         };
 
+        // 2. ÜSTTEKİ 5 GÜNLÜK TAKVİM BÖLÜMÜ
         const RANGE_DAYS = 5;
         const rangeDates = Array.from({ length: RANGE_DAYS }, (_, i) => {
             const d = new Date(dateRangeStart);
@@ -2247,6 +2249,7 @@ function App() {
                     React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: SB } }, 'Bu aralıkta transfer yok'))
         );
 
+        // 3. ALTTAKİ YIL > AY > GÜN GRUPLAMA BÖLÜMÜ
         const yearGroups = listRows.reduce((acc, t) => {
             const yearKey = t.date ? String(t.date).slice(0, 4) : 'Tarihsiz';
             const monthKey = t.date ? String(t.date).slice(0, 7) : 'Tarihsiz';
@@ -2256,6 +2259,7 @@ function App() {
             (acc[yearKey][monthKey][dayKey] || (acc[yearKey][monthKey][dayKey] = [])).push(t);
             return acc;
         }, {});
+        
         const yearGroupKeys = Object.keys(yearGroups).sort((a, b) => a < b ? 1 : -1);
 
         const yearSection = React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
@@ -2317,8 +2321,10 @@ function App() {
                 );
             })
         );
+
         return React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } }, dateRangeSection, yearSection);
-    };        return React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } }, dateRangeSection, yearSection);    const st = stats();
+    };
+  const st = stats();
     const cTRY2 = toTRY(form.paymentAmount, form.paymentCurrency);
     const dPay2 = parseFloat(form.driverPayment) || 0;
     const olAlan2 = form.assignedTo === OL && form.givenBy && form.givenBy !== OL;
