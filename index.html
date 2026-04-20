@@ -2416,14 +2416,13 @@ function App() {
                 React.createElement("div", { className: "card" },
                     React.createElement("div", { style: { display: 'flex', gap: 6, marginBottom: 8 } }, [['yes', '✅ Müşteri Öder'], ['no', '❌ Ödemez']].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => sf({ paymentCollect: v }), style: { flex: 1, padding: '10px 4px', borderRadius: 10, border: '1.5px solid ' + (form.paymentCollect === v ? NAV : BOR), background: form.paymentCollect === v ? NAV : INP, color: form.paymentCollect === v ? '#fff' : SB, fontWeight: 700, cursor: 'pointer', fontSize: '13px' } }, l)))),
                   form.paymentCollect === 'yes' && (React.createElement("div", null,
-                        React.createElement("div", { style: { marginBottom: '10px', background: '#E8F5ED', padding: '10px', borderRadius: '10px', border: '1px solid #A8D5B5' } },
-                            React.createElement("label", { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold', color: '#1D1C1A', fontSize: '13px' } },
-                                React.createElement("input", { type: "checkbox", checked: form.paymentToMe || false, onChange: e => sf({ paymentToMe: e.target.checked }), style: { marginRight: '10px', width: '18px', height: '18px' } }),
-                                "Ödeme Direkt Bana Yapıldı / Yapılacak"
-                            ),
-                            React.createElement("div", { style: { fontSize: '10px', color: '#246B3D', marginTop: '4px', marginLeft: '28px' } }, "Müşteri parayı şoföre DEĞİL, size gönderdiyse işaretleyin. Alt acenteye ve şoföre sadece araç ücreti (-borç) olarak yazılır.")
-                        ),
-                        React.createElement("div", { style: { display: 'flex', gap: 6, marginBottom: 7 } },
+                       React.createElement("div", { style: { marginBottom: '10px' } },
+                            React.createElement("button", { 
+                                onClick: () => sf({ paymentToMe: !form.paymentToMe }), 
+                                style: { width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid ' + (form.paymentToMe ? '#246B3D' : '#E4DDD4'), background: form.paymentToMe ? '#E8F5ED' : '#F6F2EC', color: form.paymentToMe ? '#246B3D' : '#8C857D', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' } 
+                            }, form.paymentToMe ? "✅ ÖDEME DİREKT BANA YAPILDI" : "⬜ Ödeme Direkt Bana Yapıldıysa Tıkla"),
+                            form.paymentToMe && React.createElement("div", { style: { fontSize: '10px', color: '#246B3D', marginTop: '5px', textAlign: 'center', fontWeight: 'bold' } }, "Hesap Düzenlendi: Alt acenteye sadece araç ücreti (-borç) yazılacak.")
+                        ),                        React.createElement("div", { style: { display: 'flex', gap: 6, marginBottom: 7 } },
                             React.createElement("div", { style: { flex: 1 } },
                                 React.createElement("span", { className: "lbl" }, "Tutar"),
                                 React.createElement("input", { type: "number", value: form.paymentAmount, onChange: e => sf({ paymentAmount: e.target.value }), placeholder: "0", className: "inp" })),
