@@ -1330,6 +1330,7 @@ function App() {
     const [debts, setDebts] = useState([]);
     const [openMonths, setOpenMonths] = useState({});
     const [openDays, setOpenDays] = useState({});
+    const [openYears, setOpenYears] = useState({});
     const [expandedT, setExpandedT] = useState({});
     const toggleExpanded = id => setExpandedT(p => ({ ...p, [id]: !p[id] }));
     const [dateRangeStart, setDateRangeStart] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d; });
@@ -1953,16 +1954,16 @@ function App() {
         };
     };
     const listMiniStats = calcMiniStats(visibleListRows);
-    const monthGroups = listRows.reduce((acc, t) => {
+    const yearGroups = listRows.reduce((acc, t) => {
+        const yearKey = t.date ? String(t.date).slice(0, 4) : 'Tarihsiz';
         const monthKey = t.date ? String(t.date).slice(0, 7) : 'Tarihsiz';
         const dayKey = t.date || 'Tarihsiz';
-        if (!acc[monthKey]) acc[monthKey] = {};
-        (acc[monthKey][dayKey] || (acc[monthKey][dayKey] = [])).push(t);
+        if (!acc[yearKey]) acc[yearKey] = {};
+        if (!acc[yearKey][monthKey]) acc[yearKey][monthKey] = {};
+        (acc[yearKey][monthKey][dayKey] || (acc[yearKey][monthKey][dayKey] = [])).push(t);
         return acc;
     }, {});
-    const monthGroupKeys = Object.keys(monthGroups).sort((a, b) => a < b ? 1 : -1);
-    const bugun = new Date();
-    const currentMonthKey = bugun.getFullYear() + '-' + String(bugun.getMonth() + 1).padStart(2, '0');
+    const yearGroupKeys = Object.keys(yearGroups).sort((a, b) => a < b ? 1 : -1);    const currentMonthKey = bugun.getFullYear() + '-' + String(bugun.getMonth() + 1).padStart(2, '0');
     const renderTransferItem = t => {
         const tp = TIPLER.find(x => x.id === t.transferType);
         const rt = ROTALAR.find(r => r.id === t.route);
@@ -2257,41 +2258,70 @@ function App() {
                 : React.createElement("div", { style: { textAlign: 'center', padding: '18px 10px' } },
                     React.createElement("div", { style: { fontSize: 28, marginBottom: 4 } }, '📭'),
                     React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: SB } }, 'Bu aralıkta transfer yok')));
-        /* ── Aylık Gruplar (altta) ── */
-        const monthSection = React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
-            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: SB, textTransform: 'uppercase', letterSpacing: .6, padding: '4px 2px 0' } }, '📆 Aylara Göre Tüm Transferler'),
-            monthGroupKeys.map(monthKey => {
-                const monthDays = monthGroups[monthKey] || {};
-                const dayKeys = Object.keys(monthDays).sort((a, b) => a < b ? -1 : 1);
-                const monthRows = dayKeys.flatMap(k => monthDays[k] || []);
-                const collectedRows = monthRows.filter(x => getCollectionState(x) === 'collected');
-                const waitingRows = monthRows.filter(x => getCollectionState(x) === 'uncollected');
-                const visibleMonthRows = byCollectionFilter(monthRows, activeCollectFilter);
-                if (!visibleMonthRows.length)
-                    return null;
-                const mTotal = monthRows.length;
-                const mDone = monthRows.filter(x => x.status === 'tam').length;
-                const mProfit = summaryNetKar(monthRows);
-                const mCollected = collectedRows.length;
-                const mWaiting = waitingRows.length;
-                const hasExplicitState = Object.prototype.hasOwnProperty.call(openMonths, monthKey);
-                const isOpen = hasExplicitState ? openMonths[monthKey] : false;
-                const monthTitle = monthKey === 'Tarihsiz' ? 'Tarihsiz' : new Date(monthKey + '-01').toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
-                return React.createElement("div", { key: monthKey, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 5px rgba(60,52,38,.05)' } },
-                    React.createElement("button", { onClick: () => setOpenMonths(p => ({ ...p, [monthKey]: !(Object.prototype.hasOwnProperty.call(p, monthKey) ? p[monthKey] : false) })), style: { width: '100%', background: '#F6F2EC', border: 'none', borderBottom: isOpen ? '1px solid ' + BOR : 'none', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer', textAlign: 'left' } },
+        /* ── Yıllık ve Aylık Gruplar (altta) ── */
+        const yearSection = React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
+            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: SB, textTransform: 'uppercase', letterSpacing: .6, padding: '4px 2px 0' } }, '📆 Yıllara Göre Tüm Transferler'),
+            yearGroupKeys.map(yearKey => {
+                const yearIsOpen = !!openYears[yearKey];
+                const monthsInYear = yearGroups[yearKey] || {};
+                const monthKeys = Object.keys(monthsInYear).sort((a, b) => a < b ? 1 : -1);
+                
+                let yearTotalTransfers = 0;
+                Object.values(monthsInYear).forEach(mDays => {
+                    Object.values(mDays).forEach(dRows => { yearTotalTransfers += dRows.length; });
+                });
+
+                return React.createElement("div", { key: yearKey, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 5px rgba(60,52,38,.05)' } },
+                    React.createElement("button", {
+                        onClick: () => setOpenYears(p => ({ ...p, [yearKey]: !yearIsOpen })),
+                        style: { width: '100%', background: '#F6F2EC', border: 'none', borderBottom: yearIsOpen ? '1px solid ' + BOR : 'none', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer', textAlign: 'left' }
+                    },
                         React.createElement("div", { style: { minWidth: 0 } },
-                            React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: TX, textTransform: 'capitalize' } }, monthTitle),
-                            React.createElement("div", { style: { fontSize: 10, color: SB, fontWeight: 600 } }, mTotal + ' transfer · ' + mDone + ' tamamlandı · Tahsilat: ' + mCollected + ' alınmış / ' + mWaiting + ' alınmamış')),
-                        React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 } },
-                            React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: mProfit >= 0 ? G : R, whiteSpace: 'nowrap' } }, (mProfit >= 0 ? '+' : '') + mProfit.toLocaleString('tr-TR') + '₺'),
-                            React.createElement("div", { style: { fontSize: 16, color: SB } }, isOpen ? '▾' : '▸'))),
-                    isOpen && React.createElement("div", { style: { padding: 8 } },
-                        renderSectionDays(visibleMonthRows))
+                            React.createElement("div", { style: { fontSize: 15, fontWeight: 900, color: TX } }, yearKey === 'Tarihsiz' ? 'Tarihsiz Kayıtlar' : yearKey + ' Yılı'),
+                            React.createElement("div", { style: { fontSize: 11, color: SB, fontWeight: 600, marginTop: 2 } }, yearTotalTransfers + ' transfer')
+                        ),
+                        React.createElement("div", { style: { fontSize: 16, color: SB } }, yearIsOpen ? '▾' : '▸')
+                    ),
+                    yearIsOpen && React.createElement("div", { style: { padding: '10px', display: 'flex', flexDirection: 'column', gap: 8, background: '#FAF9F6' } },
+                        monthKeys.map(monthKey => {
+                            const monthDays = monthsInYear[monthKey] || {};
+                            const dayKeys = Object.keys(monthDays).sort((a, b) => a < b ? -1 : 1);
+                            const monthRows = dayKeys.flatMap(k => monthDays[k] || []);
+                            const visibleMonthRows = byCollectionFilter(monthRows, activeCollectFilter);
+
+                            if (!visibleMonthRows.length) return null;
+
+                            const mTotal = monthRows.length;
+                            const mDone = monthRows.filter(x => x.status === 'tam').length;
+                            const mProfit = summaryNetKar(monthRows);
+                            
+                            const hasExplicitState = Object.prototype.hasOwnProperty.call(openMonths, monthKey);
+                            const isOpen = hasExplicitState ? openMonths[monthKey] : false;
+                            
+                            const monthTitle = monthKey === 'Tarihsiz' ? 'Tarihsiz' : new Date(monthKey + '-01').toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+
+                            return React.createElement("div", { key: monthKey, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 12, overflow: 'hidden' } },
+                                React.createElement("button", {
+                                    onClick: () => setOpenMonths(p => ({ ...p, [monthKey]: !isOpen })),
+                                    style: { width: '100%', background: '#fff', border: 'none', borderBottom: isOpen ? '1px solid ' + BOR : 'none', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', textAlign: 'left' }
+                                },
+                                    React.createElement("div", { style: { minWidth: 0 } },
+                                        React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: TX, textTransform: 'capitalize' } }, monthTitle),
+                                        React.createElement("div", { style: { fontSize: 10, color: SB, fontWeight: 600 } }, mTotal + ' transfer · ' + mDone + ' tamam')
+                                    ),
+                                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 } },
+                                        React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: mProfit >= 0 ? G : R } }, (mProfit >= 0 ? '+' : '') + mProfit.toLocaleString('tr-TR') + '₺'),
+                                        React.createElement("div", { style: { fontSize: 16, color: SB } }, isOpen ? '▾' : '▸')
+                                    )
+                                ),
+                                isOpen && React.createElement("div", { style: { padding: 8 } }, renderSectionDays(visibleMonthRows))
+                            );
+                        })
+                    )
                 );
-            }));
-        return React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } }, dateRangeSection, monthSection);
-    };
-    const st = stats();
+            })
+        );
+        return React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } }, dateRangeSection, yearSection);    const st = stats();
     const cTRY2 = toTRY(form.paymentAmount, form.paymentCurrency);
     const dPay2 = parseFloat(form.driverPayment) || 0;
     const olAlan2 = form.assignedTo === OL && form.givenBy && form.givenBy !== OL;
