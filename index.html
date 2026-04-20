@@ -2160,14 +2160,23 @@ function App() {
                 const todayKey = new Date().toISOString().split('T')[0];
                 const isTodayHeader = dayKey === todayKey;
                 
-                // --- YENİ AKORDEON MANTIĞI ---
+                // --- KESİN ÇÖZÜM MANTIĞI ---
                 let dayIsOpen = false;
-                if (openDays.aktif) {
+                if (selectedRangeDay === dayKey) {
+                    // Yukarıdaki 5 günlük kutulardan birine tıklandıysa O GÜNÜ ZORLA AÇ!
+                    dayIsOpen = true;
+                } else if (openDays.aktif) {
+                    // Normal başlıklara tıklandıysa hafızadakini aç
                     dayIsOpen = (openDays.aktif === dayKey);
                 } else {
+                    // İlk açılışta sadece Bugünü aç
                     dayIsOpen = (dayKey === todayKey);
                 }
-                const toggleDay = () => setOpenDays({ aktif: dayIsOpen ? 'kapali' : dayKey });
+                
+                const toggleDay = () => {
+                    if (selectedRangeDay === dayKey) setSelectedRangeDay(null);
+                    setOpenDays({ aktif: dayIsOpen ? 'kapali' : dayKey });
+                };
                 // -----------------------------
 
                 return React.createElement("div", { key: dayKey, id: 'day-' + dayKey, style: { borderTop: 'none' } },
@@ -2190,8 +2199,7 @@ function App() {
                     }, "📅 Bugüne Dön"),
                     dayIsOpen && React.createElement("div", null, dayRows.map(renderTransferItem)));
             }));
-        };
-      const renderCollectionBlock = (title, rows, tone) => {
+        };      const renderCollectionBlock = (title, rows, tone) => {
             if (!rows.length)
                 return null;
             const secProfit = summaryNetKar(rows);
