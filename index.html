@@ -244,7 +244,7 @@ const BF = {
     childSeat: false, childSeatCount: 0,
     paymentAmount: '', paymentCurrency: 'TRY', paymentCollect: 'yes',
     paymentMethod: 'cash', paymentStatus: 'pending', driverPayment: '', paymentToMe: false,
-    status: 'tam', notes: '', settled: false, customerCollected: false, companyCollected: false, vehiclePaid: false, useMaps: false,
+    status: 'tam', notes: '', settled: false, customerCollected: false, companyCollected: false, vehiclePaid: false, useMaps: false, isReturn: false, returnTime: '', isRecurring: false, endDate: '',
 };
 const STORAGE_KEY = 'tp10';
 const LEGACY_STORAGE_KEYS = ['tp9'];
@@ -1522,18 +1522,40 @@ function App() {
         const cTRY = toTRY(form.paymentAmount, form.paymentCurrency);
         const prev = editId ? T.find(x => x.id === editId) : null;
         const companyCollected = !!(form.companyCollected || form.settled || (prev && isCompanyCollected(prev)));
-        const newId = editId || (Date.now().toString() + '_' + Math.random().toString(36).slice(2, 8));
-        const base = { ...form, id: newId, plate: (form.plate || '').toUpperCase(), customerTRY: cTRY, profit: olmezKar({ ...form, customerTRY: cTRY }), createdAt: editId ? T.find(x => x.id === editId)?.createdAt : new Date().toISOString(), settled: companyCollected, customerCollected: !!form.customerCollected, companyCollected, vehiclePaid: !!form.vehiclePaid };
-        const t = normalizeTransfer(base);
+        
         if (editId) {
+            const base = { ...form, plate: (form.plate || '').toUpperCase(), customerTRY: cTRY, profit: olmezKar({ ...form, customerTRY: cTRY }), settled: companyCollected, customerCollected: !!form.customerCollected, companyCollected, vehiclePaid: !!form.vehiclePaid };
+            const t = normalizeTransfer(base);
             setT(p => p.map(x => x.id === editId ? t : x));
             setEditId(null);
             tip('Güncellendi');
+        } else {
+            const transfersToAdd = [];
+            let currentDate = new Date(form.date);
+            let lastDate = form.isRecurring && form.endDate ? new Date(form.endDate) : new Date(form.date);
+            let loopCount = 0;
+            
+            while (currentDate <= lastDate && loopCount < 30) {
+                const dateStr = currentDate.toISOString().split('T')[0];
+                
+                const outId = Date.now().toString() + '_' + Math.random().toString(36).slice(2, 8);
+                const outBase = { ...form, id: outId, date: dateStr, plate: (form.plate || '').toUpperCase(), customerTRY: cTRY, profit: olmezKar({ ...form, customerTRY: cTRY }), createdAt: new Date().toISOString(), settled: companyCollected, customerCollected: !!form.customerCollected, companyCollected, vehiclePaid: !!form.vehiclePaid };
+                transfersToAdd.push(normalizeTransfer(outBase));
+                
+                if (form.isReturn) {
+                    const retId = Date.now().toString() + 'R_' + Math.random().toString(36).slice(2, 8);
+                    const retBase = { ...outBase, id: retId, time: form.returnTime || form.time, pickup: form.dropoff, dropoff: form.pickup, transferType: form.transferType === 'arrival' ? 'departure' : (form.transferType === 'departure' ? 'arrival' : form.transferType) };
+                    transfersToAdd.push(normalizeTransfer(retBase));
+                }
+                
+                currentDate.setDate(currentDate.getDate() + 1);
+                loopCount++;
+            }
+            
+            setT(p => [...p, ...transfersToAdd]);
+            tip(transfersToAdd.length + ' Transfer Eklendi');
         }
-        else {
-            setT(p => p.some(x => x.id === t.id) ? p : [...p, t]);
-            tip('Kaydedildi');
-        }
+        
         setForm(BF);
         setTab('list');
     };
@@ -2321,6 +2343,22 @@ function App() {
                     React.createElement("div", null,
                         React.createElement("span", { className: "lbl" }, "\u2708\uFE0F U\u00E7u\u015F Kodu"),
                         React.createElement("input", { type: "text", value: form.flightCode, onChange: e => sf({ flightCode: e.target.value.toUpperCase() }), placeholder: "TK 123", className: "inp" }))),
+                                                  !editId && React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10, marginTop: 5, marginBottom: 5, padding: '12px', background: '#F6F2EC', borderRadius: '12px', border: '1px solid #E4DDD4' } },
+                        React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                            React.createElement("label", { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', color: '#1D1C1A' } },
+                                React.createElement("input", { type: "checkbox", checked: form.isReturn || false, onChange: e => sf({ isReturn: e.target.checked }), style: { marginRight: '8px', width: '18px', height: '18px' } }),
+                                "🔄 Dönüş Seferi Ekle"
+                            ),
+                            form.isReturn && React.createElement("input", { type: "time", value: form.returnTime || '', onChange: e => sf({ returnTime: e.target.value }), className: "inp", style: { width: '110px', padding: '6px 8px' } })
+                        ),
+                        React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                            React.createElement("label", { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', color: '#1D1C1A' } },
+                                React.createElement("input", { type: "checkbox", checked: form.isRecurring || false, onChange: e => sf({ isRecurring: e.target.checked }), style: { marginRight: '8px', width: '18px', height: '18px' } }),
+                                "📅 Her Gün Tekrarla"
+                            ),
+                            form.isRecurring && React.createElement("input", { type: "date", value: form.endDate || '', onChange: e => sf({ endDate: e.target.value }), className: "inp", style: { width: '140px', padding: '6px 8px' } })
+                        )
+                    ),
                 React.createElement("div", { className: "card" },
                     React.createElement("div", { style: { display: 'flex', gap: 7, alignItems: 'flex-end', marginBottom: 8 } },
                         React.createElement("div", { style: { flex: 1 } },
