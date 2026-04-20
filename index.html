@@ -1328,9 +1328,8 @@ function App() {
     const [showSt, setShowSt] = useState(false);
     const [aracK, setAracK] = useState([]);
     const [debts, setDebts] = useState([]);
-    const [openDays, setOpenDays] = useState({});
     const [openMonths, setOpenMonths] = useState({});
-    const [openYears, setOpenYears] = useState({});
+    const [openDays, setOpenDays] = useState({});
     const [expandedT, setExpandedT] = useState({});
     const toggleExpanded = id => setExpandedT(p => ({ ...p, [id]: !p[id] }));
     const [dateRangeStart, setDateRangeStart] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d; });
@@ -1954,16 +1953,16 @@ function App() {
         };
     };
     const listMiniStats = calcMiniStats(visibleListRows);
-    const yearGroups = listRows.reduce((acc, t) => {
-        const yearKey = t.date ? String(t.date).slice(0, 4) : 'Tarihsiz';
+    const monthGroups = listRows.reduce((acc, t) => {
         const monthKey = t.date ? String(t.date).slice(0, 7) : 'Tarihsiz';
         const dayKey = t.date || 'Tarihsiz';
-        if (!acc[yearKey]) acc[yearKey] = {};
-        if (!acc[yearKey][monthKey]) acc[yearKey][monthKey] = {};
-        (acc[yearKey][monthKey][dayKey] || (acc[yearKey][monthKey][dayKey] = [])).push(t);
+        if (!acc[monthKey]) acc[monthKey] = {};
+        (acc[monthKey][dayKey] || (acc[monthKey][dayKey] = [])).push(t);
         return acc;
     }, {});
-    const yearGroupKeys = Object.keys(yearGroups).sort((a, b) => a < b ? 1 : -1);    const currentMonthKey = bugun.getFullYear() + '-' + String(bugun.getMonth() + 1).padStart(2, '0');
+    const monthGroupKeys = Object.keys(monthGroups).sort((a, b) => a < b ? 1 : -1);
+    const bugun = new Date();
+    const currentMonthKey = bugun.getFullYear() + '-' + String(bugun.getMonth() + 1).padStart(2, '0');
     const renderTransferItem = t => {
         const tp = TIPLER.find(x => x.id === t.transferType);
         const rt = ROTALAR.find(r => r.id === t.route);
@@ -2146,8 +2145,7 @@ function App() {
             )
         );
     };
-const renderTransferList = () => {
-        // 1. GÜNLERİ VE TRANSFER KARTLARINI ÇİZEN BÖLÜM (AKORDEON)
+    const renderTransferList = () => {
         const renderSectionDays = rows => {
             const dayMap = rows.reduce((acc, t) => {
                 const dayKey = t.date || 'Tarihsiz';
@@ -2162,19 +2160,24 @@ const renderTransferList = () => {
                 const todayKey = new Date().toISOString().split('T')[0];
                 const isTodayHeader = dayKey === todayKey;
                 
+                // --- KESİN ÇÖZÜM MANTIĞI ---
                 let dayIsOpen = false;
                 if (selectedRangeDay === dayKey) {
+                    // Yukarıdaki 5 günlük kutulardan birine tıklandıysa O GÜNÜ ZORLA AÇ!
                     dayIsOpen = true;
-                } else if (openDays[dayKey] === true) {
-                    dayIsOpen = true;
-                } else if (Object.keys(openDays).length === 0 && isTodayHeader) {
-                    dayIsOpen = true;
+                } else if (openDays.aktif) {
+                    // Normal başlıklara tıklandıysa hafızadakini aç
+                    dayIsOpen = (openDays.aktif === dayKey);
+                } else {
+                    // İlk açılışta sadece Bugünü aç
+                    dayIsOpen = (dayKey === todayKey);
                 }
                 
                 const toggleDay = () => {
                     if (selectedRangeDay === dayKey) setSelectedRangeDay(null);
-                    setOpenDays(dayIsOpen ? { [dayKey]: false } : { [dayKey]: true });
+                    setOpenDays({ aktif: dayIsOpen ? 'kapali' : dayKey });
                 };
+                // -----------------------------
 
                 return React.createElement("div", { key: dayKey, id: 'day-' + dayKey, style: { borderTop: 'none' } },
                     React.createElement("div", { className: 'date-hdr', onClick: toggleDay, style: { cursor: 'pointer' } },
@@ -2185,24 +2188,28 @@ const renderTransferList = () => {
                     !isTodayHeader && dayIsOpen && React.createElement("button", {
                         className: 'bugun-inline',
                         onClick: () => {
-                            setSelectedRangeDay(null);
-                            setOpenDays({ [todayKey]: true });
-                            setTimeout(() => {
-                                const todayEl = document.getElementById('day-' + todayKey);
-                                const root = document.getElementById('root');
-                                if (todayEl && root) {
-                                    root.scrollTo({ top: todayEl.offsetTop - 130, behavior: 'smooth' });
-                                } else if (root) {
-                                    root.scrollTo({ top: 0, behavior: 'smooth' });
-                                }
-                            }, 50);
+                            const todayEl = document.getElementById('day-' + todayKey);
+                            const root = document.getElementById('root');
+                            if (todayEl && root) {
+                                root.scrollTo({ top: todayEl.offsetTop - 130, behavior: 'smooth' });
+                            } else if (root) {
+                                root.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
                         }
                     }, "📅 Bugüne Dön"),
                     dayIsOpen && React.createElement("div", null, dayRows.map(renderTransferItem)));
             }));
+        };      const renderCollectionBlock = (title, rows, tone) => {
+            if (!rows.length)
+                return null;
+            const secProfit = summaryNetKar(rows);
+            return React.createElement("div", { style: { border: '1px solid ' + tone.border, borderRadius: 12, overflow: 'hidden', background: '#fff' } },
+                React.createElement("div", { style: { padding: '9px 10px', background: tone.bg, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 } },
+                    React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: tone.color } }, title),
+                    React.createElement("div", { style: { fontSize: 10, color: tone.color, fontWeight: 800, whiteSpace: 'nowrap' } }, rows.length + ' transfer · ' + (secProfit >= 0 ? '+' : '') + secProfit.toLocaleString('tr-TR') + '₺')),
+                renderSectionDays(rows));
         };
-
-        // 2. ÜSTTEKİ 5 GÜNLÜK TAKVİM BÖLÜMÜ
+        /* ── Tarih Aralığı Bölümü ── */
         const RANGE_DAYS = 5;
         const rangeDates = Array.from({ length: RANGE_DAYS }, (_, i) => {
             const d = new Date(dateRangeStart);
@@ -2218,8 +2225,8 @@ const renderTransferList = () => {
         const goToday = () => { setSelectedRangeDay(null); const d = new Date(); d.setHours(0,0,0,0); setDateRangeStart(d); };
         const rangeLabel = selectedRangeDay ? new Date(selectedRangeDay).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' }) : rangeDates[0].toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) + ' – ' + rangeDates[RANGE_DAYS - 1].toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
         const isCurrentRange = rangeDateKeys.includes(todayKey);
-        
         const dateRangeSection = React.createElement("div", { style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 5px rgba(60,52,38,.05)' } },
+            /* Üst bar: navigasyon */
             React.createElement("div", { style: { padding: '10px 10px 6px', background: '#F6F2EC', borderBottom: '1px solid ' + BOR } },
                 React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 } },
                     React.createElement("button", { onClick: () => shiftRange(-1), style: { background: INP, border: '1px solid ' + BOR, borderRadius: 9, width: 34, height: 34, cursor: 'pointer', fontSize: 16, fontWeight: 800, color: NAV, display: 'flex', alignItems: 'center', justifyContent: 'center' } }, '◂'),
@@ -2228,6 +2235,7 @@ const renderTransferList = () => {
                         React.createElement("div", { style: { fontSize: 10, color: SB, fontWeight: 600 } }, rangeRows.length + ' transfer · ' + (rangeProfit >= 0 ? '+' : '') + rangeProfit.toLocaleString('tr-TR') + '₺')),
                     React.createElement("button", { onClick: () => shiftRange(1), style: { background: INP, border: '1px solid ' + BOR, borderRadius: 9, width: 34, height: 34, cursor: 'pointer', fontSize: 16, fontWeight: 800, color: NAV, display: 'flex', alignItems: 'center', justifyContent: 'center' } }, '▸')),
                 !isCurrentRange && React.createElement("button", { onClick: goToday, style: { width: '100%', background: 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', color: '#fff', border: 'none', borderRadius: 9, padding: '7px 0', fontWeight: 800, fontSize: 11, cursor: 'pointer', marginBottom: 6 } }, '↻ Bugüne Dön'),
+                /* 5 günlük kutucuklar */
                 React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5 } },
                     rangeDates.map((rd, idx) => {
                         const dk = fmtDateKey(rd);
@@ -2235,6 +2243,7 @@ const renderTransferList = () => {
                         const isSelected = selectedRangeDay === dk;
                         const dayTransfers = byCollectionFilter(listRows.filter(t => t.date === dk), activeCollectFilter);
                         const cnt = dayTransfers.length;
+                        const doneCnt = dayTransfers.filter(x => x.status === 'tam').length;
                         const boxBg = isSelected ? 'linear-gradient(135deg,#5A8A6A,#4A7A5A)' : isToday ? 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')' : cnt > 0 ? '#FFFEFA' : INP;
                         const boxBorder = isSelected ? '#16794F' : isToday ? NAV : cnt > 0 ? '#B08D57' : BOR;
                         return React.createElement("button", { key: dk, onClick: () => setSelectedRangeDay(prev => prev === dk ? null : dk), style: { textAlign: 'center', padding: '6px 2px', borderRadius: 10, background: boxBg, border: '1.5px solid ' + boxBorder, cursor: 'pointer', display: 'block', width: '100%' } },
@@ -2242,89 +2251,47 @@ const renderTransferList = () => {
                             React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: (isSelected || isToday) ? '#fff' : TX, lineHeight: 1.2 } }, rd.getDate()),
                             React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: (isSelected || isToday) ? '#EDD4A0' : cnt > 0 ? G : SB, marginTop: 2 } }, cnt > 0 ? cnt + ' transf.' : '—'));
                     }))),
+            /* Tarih aralığı transferleri */
             rangeRows.length > 0
                 ? React.createElement("div", { style: { padding: 8 } }, renderSectionDays(rangeRows))
                 : React.createElement("div", { style: { textAlign: 'center', padding: '18px 10px' } },
                     React.createElement("div", { style: { fontSize: 28, marginBottom: 4 } }, '📭'),
-                    React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: SB } }, 'Bu aralıkta transfer yok'))
-        );
-
-        // 3. ALTTAKİ YIL > AY > GÜN GRUPLAMA BÖLÜMÜ
-        const yearGroups = listRows.reduce((acc, t) => {
-            const yearKey = t.date ? String(t.date).slice(0, 4) : 'Tarihsiz';
-            const monthKey = t.date ? String(t.date).slice(0, 7) : 'Tarihsiz';
-            const dayKey = t.date || 'Tarihsiz';
-            if (!acc[yearKey]) acc[yearKey] = {};
-            if (!acc[yearKey][monthKey]) acc[yearKey][monthKey] = {};
-            (acc[yearKey][monthKey][dayKey] || (acc[yearKey][monthKey][dayKey] = [])).push(t);
-            return acc;
-        }, {});
-        
-        const yearGroupKeys = Object.keys(yearGroups).sort((a, b) => a < b ? 1 : -1);
-
-        const yearSection = React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
-            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: SB, textTransform: 'uppercase', letterSpacing: .6, padding: '4px 2px 0' } }, '📆 Yıllara Göre Tüm Transferler'),
-            yearGroupKeys.map(yearKey => {
-                const yearIsOpen = !!openYears[yearKey];
-                const monthsInYear = yearGroups[yearKey] || {};
-                const monthKeys = Object.keys(monthsInYear).sort((a, b) => a < b ? 1 : -1);
-                
-                let yearTotalTransfers = 0;
-                Object.values(monthsInYear).forEach(mDays => {
-                    Object.values(mDays).forEach(dRows => { yearTotalTransfers += dRows.length; });
-                });
-
-                return React.createElement("div", { key: yearKey, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 5px rgba(60,52,38,.05)' } },
-                    React.createElement("button", {
-                        onClick: () => setOpenYears(p => ({ ...p, [yearKey]: !yearIsOpen })),
-                        style: { width: '100%', background: '#F6F2EC', border: 'none', borderBottom: yearIsOpen ? '1px solid ' + BOR : 'none', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer', textAlign: 'left' }
-                    },
+                    React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: SB } }, 'Bu aralıkta transfer yok')));
+        /* ── Aylık Gruplar (altta) ── */
+        const monthSection = React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
+            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: SB, textTransform: 'uppercase', letterSpacing: .6, padding: '4px 2px 0' } }, '📆 Aylara Göre Tüm Transferler'),
+            monthGroupKeys.map(monthKey => {
+                const monthDays = monthGroups[monthKey] || {};
+                const dayKeys = Object.keys(monthDays).sort((a, b) => a < b ? -1 : 1);
+                const monthRows = dayKeys.flatMap(k => monthDays[k] || []);
+                const collectedRows = monthRows.filter(x => getCollectionState(x) === 'collected');
+                const waitingRows = monthRows.filter(x => getCollectionState(x) === 'uncollected');
+                const visibleMonthRows = byCollectionFilter(monthRows, activeCollectFilter);
+                if (!visibleMonthRows.length)
+                    return null;
+                const mTotal = monthRows.length;
+                const mDone = monthRows.filter(x => x.status === 'tam').length;
+                const mProfit = summaryNetKar(monthRows);
+                const mCollected = collectedRows.length;
+                const mWaiting = waitingRows.length;
+                const hasExplicitState = Object.prototype.hasOwnProperty.call(openMonths, monthKey);
+                const isOpen = hasExplicitState ? openMonths[monthKey] : false;
+                const monthTitle = monthKey === 'Tarihsiz' ? 'Tarihsiz' : new Date(monthKey + '-01').toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+                return React.createElement("div", { key: monthKey, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 5px rgba(60,52,38,.05)' } },
+                    React.createElement("button", { onClick: () => setOpenMonths(p => ({ ...p, [monthKey]: !(Object.prototype.hasOwnProperty.call(p, monthKey) ? p[monthKey] : false) })), style: { width: '100%', background: '#F6F2EC', border: 'none', borderBottom: isOpen ? '1px solid ' + BOR : 'none', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer', textAlign: 'left' } },
                         React.createElement("div", { style: { minWidth: 0 } },
-                            React.createElement("div", { style: { fontSize: 15, fontWeight: 900, color: TX } }, yearKey === 'Tarihsiz' ? 'Tarihsiz Kayıtlar' : yearKey + ' Yılı'),
-                            React.createElement("div", { style: { fontSize: 11, color: SB, fontWeight: 600, marginTop: 2 } }, yearTotalTransfers + ' transfer')
-                        ),
-                        React.createElement("div", { style: { fontSize: 16, color: SB } }, yearIsOpen ? '▾' : '▸')
-                    ),
-                    yearIsOpen && React.createElement("div", { style: { padding: '10px', display: 'flex', flexDirection: 'column', gap: 8, background: '#FAF9F6' } },
-                        monthKeys.map(monthKey => {
-                            const monthDays = monthsInYear[monthKey] || {};
-                            const dayKeys = Object.keys(monthDays).sort((a, b) => a < b ? -1 : 1);
-                            const monthRows = dayKeys.flatMap(k => monthDays[k] || []);
-                            const visibleMonthRows = byCollectionFilter(monthRows, activeCollectFilter);
-
-                            if (!visibleMonthRows.length) return null;
-
-                            const mTotal = monthRows.length;
-                            const mDone = monthRows.filter(x => x.status === 'tam').length;
-                            const mProfit = summaryNetKar(monthRows);
-                            const isOpen = openMonths[monthKey] === true;
-                            const monthTitle = monthKey === 'Tarihsiz' ? 'Tarihsiz' : new Date(monthKey + '-01').toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
-
-                            return React.createElement("div", { key: monthKey, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 12, overflow: 'hidden' } },
-                                React.createElement("button", {
-                                    onClick: () => setOpenMonths(p => ({ ...p, [monthKey]: !isOpen })),
-                                    style: { width: '100%', background: '#fff', border: 'none', borderBottom: isOpen ? '1px solid ' + BOR : 'none', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', textAlign: 'left' }
-                                },
-                                    React.createElement("div", { style: { minWidth: 0 } },
-                                        React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: TX, textTransform: 'capitalize' } }, monthTitle),
-                                        React.createElement("div", { style: { fontSize: 10, color: SB, fontWeight: 600 } }, mTotal + ' transfer · ' + mDone + ' tamam')
-                                    ),
-                                    React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 } },
-                                        React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: mProfit >= 0 ? G : R } }, (mProfit >= 0 ? '+' : '') + mProfit.toLocaleString('tr-TR') + '₺'),
-                                        React.createElement("div", { style: { fontSize: 16, color: SB } }, isOpen ? '▾' : '▸')
-                                    )
-                                ),
-                                isOpen && React.createElement("div", { style: { padding: 8 } }, renderSectionDays(visibleMonthRows))
-                            );
-                        })
-                    )
+                            React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: TX, textTransform: 'capitalize' } }, monthTitle),
+                            React.createElement("div", { style: { fontSize: 10, color: SB, fontWeight: 600 } }, mTotal + ' transfer · ' + mDone + ' tamamlandı · Tahsilat: ' + mCollected + ' alınmış / ' + mWaiting + ' alınmamış')),
+                        React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 } },
+                            React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: mProfit >= 0 ? G : R, whiteSpace: 'nowrap' } }, (mProfit >= 0 ? '+' : '') + mProfit.toLocaleString('tr-TR') + '₺'),
+                            React.createElement("div", { style: { fontSize: 16, color: SB } }, isOpen ? '▾' : '▸'))),
+                    isOpen && React.createElement("div", { style: { padding: 8 } },
+                        renderSectionDays(visibleMonthRows))
                 );
-            })
-        );
-
-        return React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } }, dateRangeSection, yearSection);
+            }));
+        return React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } }, dateRangeSection, monthSection);
     };
-  const st = stats();
+    const st = stats();
     const cTRY2 = toTRY(form.paymentAmount, form.paymentCurrency);
     const dPay2 = parseFloat(form.driverPayment) || 0;
     const olAlan2 = form.assignedTo === OL && form.givenBy && form.givenBy !== OL;
