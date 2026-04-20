@@ -2159,10 +2159,19 @@ function App() {
                 const dayDone = dayRows.filter(x => x.status === 'tam').length;
                 const todayKey = new Date().toISOString().split('T')[0];
                 const isTodayHeader = dayKey === todayKey;
-               const dayIsOpen = openDays[dayKey] === true || (Object.keys(openDays).length === 0 && dayKey === todayKey);
+                
+                // --- YENİ AKORDEON MANTIĞI ---
+                let dayIsOpen = false;
+                if (openDays.aktif) {
+                    dayIsOpen = (openDays.aktif === dayKey);
+                } else {
+                    dayIsOpen = (dayKey === todayKey);
+                }
+                const toggleDay = () => setOpenDays({ aktif: dayIsOpen ? 'kapali' : dayKey });
+                // -----------------------------
+
                 return React.createElement("div", { key: dayKey, id: 'day-' + dayKey, style: { borderTop: 'none' } },
-                    React.createElement("div", { className: 'date-hdr', onClick: () => setOpenDays(dayIsOpen ? { kapali: true } : { [dayKey]: true }), style: { cursor: 'pointer' } },
-                    React.createElement("div", { className: 'date-hdr', onClick: () => setOpenDays(p => ({ ...p, [dayKey]: !dayIsOpen })), style: { cursor: 'pointer' } },
+                    React.createElement("div", { className: 'date-hdr', onClick: toggleDay, style: { cursor: 'pointer' } },
                         React.createElement("div", { className: 'date-hdr-txt' }, dayKey === 'Tarihsiz' ? 'TARIHSIZ' : new Date(dayKey).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })),
                         React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
                             React.createElement("div", { className: 'date-hdr-meta' }, dayTotal + ' transfer · ' + dayDone + ' tamam'),
@@ -2182,7 +2191,7 @@ function App() {
                     dayIsOpen && React.createElement("div", null, dayRows.map(renderTransferItem)));
             }));
         };
-        const renderCollectionBlock = (title, rows, tone) => {
+      const renderCollectionBlock = (title, rows, tone) => {
             if (!rows.length)
                 return null;
             const secProfit = summaryNetKar(rows);
