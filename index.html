@@ -243,7 +243,7 @@ const BF = {
     passengerCount: 1, passengers: [{ name: '', phone: '', tc: '', pasaport: '', uyruk: 'TR' }],
     childSeat: false, childSeatCount: 0,
     paymentAmount: '', paymentCurrency: 'TRY', paymentCollect: 'yes',
-    paymentMethod: 'cash', paymentStatus: 'pending', driverPayment: '',
+    paymentMethod: 'cash', paymentStatus: 'pending', driverPayment: '', paymentToMe: false,'',
     status: 'tam', notes: '', settled: false, customerCollected: false, companyCollected: false, vehiclePaid: false, useMaps: false,
 };
 const STORAGE_KEY = 'tp10';
@@ -493,6 +493,9 @@ function calcBal(t) {
         return { firm, netOl: d };
     }
     if (yes)
+   if (veren && t.paymentToMe)
+        return { firm, netOl: -d };
+    if (yes)
         return { firm, netOl: c - d };
     return { firm, netOl: -d };
 }
@@ -504,6 +507,8 @@ function calcAltBal(t) {
     const alt = parseFloat(t.altAcentaUcreti) || 0;
     const yes = t.paymentCollect === 'yes';
     const alan = t.assignedTo === OL && t.givenBy && t.givenBy !== OL;
+    if (t.paymentToMe)
+        return { firm: t.altAcenta, netOl: -alt };
     if (alan && yes)
         return { firm: t.altAcenta, netOl: Math.max(0, c - alt) };
     if (t.paymentCollect === 'yes')
@@ -2410,7 +2415,14 @@ function App() {
                         React.createElement("select", { value: p.uyruk || 'TR', onChange: e => uPax(i, 'uyruk', e.target.value), className: "inp" }, ULKELER.map(u => React.createElement("option", { key: u.k, value: u.k }, u.n)))))))),
                 React.createElement("div", { className: "card" },
                     React.createElement("div", { style: { display: 'flex', gap: 6, marginBottom: 8 } }, [['yes', '✅ Müşteri Öder'], ['no', '❌ Ödemez']].map(([v, l]) => (React.createElement("button", { key: v, onClick: () => sf({ paymentCollect: v }), style: { flex: 1, padding: '10px 4px', borderRadius: 10, border: '1.5px solid ' + (form.paymentCollect === v ? NAV : BOR), background: form.paymentCollect === v ? NAV : INP, color: form.paymentCollect === v ? '#fff' : SB, fontWeight: 700, cursor: 'pointer', fontSize: '13px' } }, l)))),
-                    form.paymentCollect === 'yes' && (React.createElement("div", null,
+                  form.paymentCollect === 'yes' && (React.createElement("div", null,
+                        React.createElement("div", { style: { marginBottom: '10px', background: '#E8F5ED', padding: '10px', borderRadius: '10px', border: '1px solid #A8D5B5' } },
+                            React.createElement("label", { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontWeight: 'bold', color: '#1D1C1A', fontSize: '13px' } },
+                                React.createElement("input", { type: "checkbox", checked: form.paymentToMe || false, onChange: e => sf({ paymentToMe: e.target.checked }), style: { marginRight: '10px', width: '18px', height: '18px' } }),
+                                "Ödeme Direkt Bana Yapıldı / Yapılacak"
+                            ),
+                            React.createElement("div", { style: { fontSize: '10px', color: '#246B3D', marginTop: '4px', marginLeft: '28px' } }, "Müşteri parayı şoföre DEĞİL, size gönderdiyse işaretleyin. Alt acenteye ve şoföre sadece araç ücreti (-borç) olarak yazılır.")
+                        ),
                         React.createElement("div", { style: { display: 'flex', gap: 6, marginBottom: 7 } },
                             React.createElement("div", { style: { flex: 1 } },
                                 React.createElement("span", { className: "lbl" }, "Tutar"),
