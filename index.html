@@ -928,10 +928,11 @@ function HesapTab({ T, sT, agencies, tip }) {
     const [ara, setAra] = useState('');
     const [ay, setAy] = useState(new Date().toISOString().slice(0, 7));
     const [detayT, setDetayT] = useState(null);
+  const [odeloOpen, setOdeloOpen] = useState(false);
     const togSettle = (id, firm) => sT(p => p.map(x => { if (x.id !== id)
         return x; const sf = { ...(x.settledFirms || {}) }; sf[firm] = !sf[firm]; return { ...x, settledFirms: sf }; }));
     const isFirmSettled = (t, firm) => !!(t.settledFirms && t.settledFirms[firm]);
-    const firmalar = [...new Set([...T.map(t => t.givenBy), ...T.map(t => t.assignedTo), ...T.filter(t => t.altAcenta).map(t => t.altAcenta), ...agencies])].filter(Boolean).filter(f => f !== OL).sort();
+    const firmalar = [...new Set([...T.map(t => t.givenBy), ...T.map(t => t.assignedTo), ...T.filter(t => t.altAcenta).map(t => t.altAcenta), ...agencies])].filter(Boolean).filter(f => f !== OL).filter(f => f !== 'Odelo').sort();
     const filtered = firmalar.filter(f => !ara || f.toLowerCase().includes(ara.toLowerCase()));
     const ozet = firm => {
         let al = 0, ver = 0;
@@ -1127,7 +1128,31 @@ function HesapTab({ T, sT, agencies, tip }) {
                     React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
                         renderHesapBolum(sel + ' verdi\u011Fi i\u015Fler', onunVerdikleri, NAV),
                         renderHesapBolum('\u00D6lmeztur verdi\u011Fi i\u015Fler', benimVerdiklerim, BR),
-                        altKayitlar.length > 0 && renderHesapBolum('Alt acenta i\u015Fleri', altKayitlar, O)),
+                        altKayitlar.length > 0 && renderHesapBolum('Alt acenta işleri', altKayitlar, O),
+                        
+                        (sel === 'Balontur' || sel === 'Balentur' || sel === 'Balon tur') && React.createElement("div", { style: { marginTop: 20, borderTop: '2px solid ' + BOR, paddingTop: 15 } },
+                            React.createElement("button", {
+                                onClick: () => setOdeloOpen(!odeloOpen),
+                                style: { width: '100%', background: '#F6F2EC', border: '1px solid ' + BOR, borderRadius: 12, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }
+                            },
+                                React.createElement("div", null,
+                                    React.createElement("div", { style: { fontWeight: 800, fontSize: 13, color: TX } }, "📂 Odelo Acenta Hesabı"),
+                                    React.createElement("div", { style: { fontSize: 10, color: SB } }, "Balontur bünyesindeki Odelo kayıtları")),
+                                React.createElement("span", { style: { color: SB, fontSize: 16 } }, odeloOpen ? '▲' : '▼')
+                            ),
+                            odeloOpen && (function() {
+                                const oData = ozet('Odelo');
+                                return React.createElement("div", { style: { marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 } },
+                                    React.createElement("div", { style: { background: oData.net >= 0 ? '#E8F5ED' : '#F8EBEB', padding: '10px', borderRadius: 11, textAlign: 'center', border: '1px solid ' + (oData.net >= 0 ? '#A8D5B5' : '#D8A0A0') } },
+                                        React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: oData.net >= 0 ? G : R } }, "ODELO NET DURUM"),
+                                        React.createElement("div", { style: { fontSize: 18, fontWeight: 800, color: oData.net >= 0 ? G : R } }, fr(Math.abs(oData.net)) + " ₺ " + (oData.net >= 0 ? '(Alacak)' : '(Borç)'))
+                                    ),
+                                    renderHesapBolum('Odelo Verilen İşler', oData.ts.filter(x => x.yon === 'benVerdim').sort(sortHesapTs), BR),
+                                    renderHesapBolum('Odelo Gelen İşler', oData.ts.filter(x => x.yon === 'oVerdi').sort(sortHesapTs), NAV)
+                                );
+                            })()
+                        )
+                    ),
                     React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 } },
                         React.createElement("button", { onClick: () => { copyText(sirketMsg(sel)); tip('Kopyaland\u0131!'); }, style: { background: G, color: '#fff', border: 'none', borderRadius: 11, padding: '10px 4px', fontWeight: 700, fontSize: '10px', cursor: 'pointer', lineHeight: 1.4 } }, "\uD83D\uDCE4 \u015Eirkete\nKopyala"),
                         React.createElement("button", { onClick: () => excelExport(sel), style: { background: G, color: '#fff', border: 'none', borderRadius: 11, padding: '10px 4px', fontWeight: 700, fontSize: '10px', cursor: 'pointer', lineHeight: 1.4 } }, "\uD83D\uDCCA Excel\n\u0130ndir"),
