@@ -482,22 +482,23 @@ function calcBal(t) {
     if (!veren && !alan)
         return null;
     const firm = veren ? t.assignedTo : t.givenBy;
+
     if (alan) {
+        // Fatih Erden: müşteri kısmi ödedi → kalan (d - c) firmadan alacak
         if (t.altAcenta && alt > 0 && yes) {
             return { firm, netOl: -Math.max(0, c - d) };
         }
         if (yes) {
-            // Müşteri öder ama tam ödemedi → kalan (d - c) firmadan (givenBy) alınacak
-            // Örnek: d=5500, c=3000 → netOl = +2500 (alacak, fatih erden'den)
-            return { firm, netOl: d - c };
+            return { firm, netOl: d - c };  // +2500 alacak
         }
         return { firm, netOl: d };
     }
-    // veren: biz verdik, başka firma yaptı
+
+    // Yaşar Taşdemir (veren): müşteri ödedi → kâr (c - d) firmadan alacak (+900)
     if (yes) {
         if (t.paymentToMe)
             return { firm, netOl: -d };
-        return { firm, netOl: d - c };  // kalan agency'den
+        return { firm, netOl: c - d };  // +900 alacak
     }
     return { firm, netOl: -d };
 }
@@ -2170,23 +2171,16 @@ function App() {
                 const todayKey = new Date().toISOString().split('T')[0];
                 const isTodayHeader = dayKey === todayKey;
                 
-                // --- KESİN ÇÖZÜM MANTIĞI ---
-                let dayIsOpen = false;
-                if (selectedRangeDay === dayKey) {
-                    dayIsOpen = true;
-                } else if (dayKey === todayKey && !selectedRangeDay) {
-                    dayIsOpen = true;
-                } else {
-                    dayIsOpen = false;
-                }
-                
+                // --- DÜZELTİLMİŞ AÇILIR KAPANIR GÜN PANELLERİ ---
+                const dayIsOpen = openDays[dayKey] !== undefined ? openDays[dayKey] : (dayKey === todayKey);
                 const toggleDay = () => {
+                    setOpenDays(p => ({ ...p, [dayKey]: !dayIsOpen }));
                     if (selectedRangeDay === dayKey) setSelectedRangeDay(null);
                 };
                 // -----------------------------
 
                 return React.createElement("div", { key: dayKey, id: 'day-' + dayKey, style: { borderTop: 'none' } },
-                    React.createElement("div", { className: 'date-hdr', style: { cursor: 'default' } },
+                    React.createElement("div", { className: 'date-hdr', onClick: toggleDay, style: { cursor: 'pointer' } },
                         React.createElement("div", { className: 'date-hdr-txt' }, dayKey === 'Tarihsiz' ? 'TARIHSIZ' : new Date(dayKey).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })),
                         React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
                             React.createElement("div", { className: 'date-hdr-meta' }, dayTotal + ' transfer · ' + dayDone + ' tamam'),
