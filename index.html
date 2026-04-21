@@ -1950,7 +1950,7 @@ function App() {
             mC: monthRows.length,
             tam: monthRows.filter(t => t.status === 'tam').length,
             bos: monthRows.filter(t => t.status === 'bos').length,
-            mP: summaryNetKar(monthRows)
+            mP: monthRows.filter(t => !isPlate16Transfer(t)).reduce((s, t) => s + Math.round(olmezPotentialKar(t)), 0)
         };
     };
     const listMiniStats = calcMiniStats(visibleListRows);
@@ -2171,24 +2171,20 @@ function App() {
                 // --- KESİN ÇÖZÜM MANTIĞI ---
                 let dayIsOpen = false;
                 if (selectedRangeDay === dayKey) {
-                    // Yukarıdaki 5 günlük kutulardan birine tıklandıysa O GÜNÜ ZORLA AÇ!
                     dayIsOpen = true;
-                } else if (openDays.aktif) {
-                    // Normal başlıklara tıklandıysa hafızadakini aç
-                    dayIsOpen = (openDays.aktif === dayKey);
+                } else if (dayKey === todayKey && !selectedRangeDay) {
+                    dayIsOpen = true;
                 } else {
-                    // İlk açılışta sadece Bugünü aç
-                    dayIsOpen = (dayKey === todayKey);
+                    dayIsOpen = false;
                 }
                 
                 const toggleDay = () => {
                     if (selectedRangeDay === dayKey) setSelectedRangeDay(null);
-                    setOpenDays({ aktif: dayIsOpen ? 'kapali' : dayKey });
                 };
                 // -----------------------------
 
                 return React.createElement("div", { key: dayKey, id: 'day-' + dayKey, style: { borderTop: 'none' } },
-                    React.createElement("div", { className: 'date-hdr', onClick: toggleDay, style: { cursor: 'pointer' } },
+                    React.createElement("div", { className: 'date-hdr', style: { cursor: 'default' } },
                         React.createElement("div", { className: 'date-hdr-txt' }, dayKey === 'Tarihsiz' ? 'TARIHSIZ' : new Date(dayKey).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })),
                         React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
                             React.createElement("div", { className: 'date-hdr-meta' }, dayTotal + ' transfer · ' + dayDone + ' tamam'),
@@ -2227,7 +2223,7 @@ function App() {
         const fmtDateKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         const todayKey = fmtDateKey(new Date());
         const rangeDateKeys = rangeDates.map(fmtDateKey);
-        const rangeRows = byCollectionFilter(listRows.filter(t => t.date && rangeDateKeys.includes(t.date) && (!selectedRangeDay || t.date === selectedRangeDay)), activeCollectFilter);
+        const rangeRows = byCollectionFilter(listRows.filter(t => t.date && (selectedRangeDay ? t.date === selectedRangeDay : t.date === todayKey)), activeCollectFilter);
         const rangeProfit = summaryNetKar(rangeRows);
         const shiftRange = dir => { setSelectedRangeDay(null); setDateRangeStart(prev => { const d = new Date(prev); d.setDate(d.getDate() + dir * RANGE_DAYS); return d; }); };
         const goToday = () => { setSelectedRangeDay(null); const d = new Date(); d.setHours(0,0,0,0); setDateRangeStart(d); };
@@ -2264,7 +2260,7 @@ function App() {
                 ? React.createElement("div", { style: { padding: 8 } }, renderSectionDays(rangeRows))
                 : React.createElement("div", { style: { textAlign: 'center', padding: '18px 10px' } },
                     React.createElement("div", { style: { fontSize: 28, marginBottom: 4 } }, '📭'),
-                    React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: SB } }, 'Bu aralıkta transfer yok')));
+                    React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: SB } }, 'Bu haftada ' + rangeRows.length + ' transfer var')));
         /* ── Yıllara Göre Gruplar (2026 > 2025 > ... > aylar > günler) ── */
         const yearSection = React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
             React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: SB, textTransform: 'uppercase', padding: '2px 0' } }, '🗓️ Yıllara Göre Tüm Transferler'),
@@ -2274,7 +2270,7 @@ function App() {
                 const yearRows = monthKeysInYear.flatMap(mk => Object.values(yearMonths[mk] || {}).flat());
                 const yTotal = yearRows.length;
                 const yDone = yearRows.filter(x => x.status === 'tam').length;
-                const yProfit = summaryNetKar(yearRows);
+                const yOlmezProfit = yearRows.filter(t => !isPlate16Transfer(t)).reduce((s, t) => s + Math.round(olmezPotentialKar(t)), 0);
                 const collectedY = yearRows.filter(x => getCollectionState(x) === 'collected').length;
                 const waitingY = yearRows.filter(x => getCollectionState(x) === 'uncollected').length;
                 const hasYState = Object.prototype.hasOwnProperty.call(openYears, yearKey);
@@ -2285,7 +2281,7 @@ function App() {
                         React.createElement("div", null,
                             React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: TX } }, yearTitle + ' Yılı'),
                             React.createElement("div", { style: { fontSize: 9, color: SB } }, yTotal + ' transfer · ' + yDone + ' tamam · ' + collectedY + ' alınmış')),
-                        React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: yProfit >= 0 ? G : R } }, (yProfit >= 0 ? '+' : '') + yProfit.toLocaleString('tr-TR') + '₺')),
+                        React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: yOlmezProfit >= 0 ? G : R } }, (yOlmezProfit >= 0 ? '+' : '') + yOlmezProfit.toLocaleString('tr-TR') + '₺')),
                     isYOpen && React.createElement("div", { style: { padding: '6px 4px' } },
                         monthKeysInYear.map(monthKey => {
                             const monthDays = yearMonths[monthKey] || {};
@@ -2295,14 +2291,14 @@ function App() {
                             if (!visibleMonthRows.length) return null;
                             const mTotal = monthRows.length;
                             const mDone = monthRows.filter(x => x.status === 'tam').length;
-                            const mProfit = summaryNetKar(monthRows);
+                            const mOlmezProfit = monthRows.filter(t => !isPlate16Transfer(t)).reduce((s, t) => s + Math.round(olmezPotentialKar(t)), 0);
                             const hasMState = Object.prototype.hasOwnProperty.call(openMonths, monthKey);
                             const isMOpen = hasMState ? openMonths[monthKey] : false;
                             const monthTitle = monthKey === 'Tarihsiz' ? 'Tarihsiz' : new Date(monthKey + '-01').toLocaleDateString('tr-TR', { month: 'long' });
                             return React.createElement("div", { key: monthKey, style: { background: '#fff', border: '1px solid ' + BOR, borderRadius: 10, margin: '4px 6px', overflow: 'hidden' } },
                                 React.createElement("button", { onClick: () => setOpenMonths(p => ({ ...p, [monthKey]: !(hasMState ? p[monthKey] : false) })), style: { width: '100%', background: '#F8F4EE', border: 'none', padding: '6px 8px', display: 'flex', justifyContent: 'space-between', cursor: 'pointer' } },
                                     React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: TX } }, monthTitle),
-                                    React.createElement("div", { style: { fontSize: 9, color: mProfit >= 0 ? G : R } }, (mProfit >= 0 ? '+' : '') + mProfit.toLocaleString('tr-TR') + '₺')),
+                                    React.createElement("div", { style: { fontSize: 9, color: mOlmezProfit >= 0 ? G : R } }, (mOlmezProfit >= 0 ? '+' : '') + mOlmezProfit.toLocaleString('tr-TR') + '₺')),
                                 isMOpen && React.createElement("div", { style: { padding: 4 } }, renderSectionDays(visibleMonthRows))
                             );
                         })));
