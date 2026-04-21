@@ -2189,7 +2189,7 @@ function App() {
                 };
                 // -----------------------------
 
-                return React.createElement("div", { key: dayKey, id: 'day-' + dayKey, style: { borderTop: 'none' } },
+                return React.createElement("div", { key: dayKey, id: 'day-' + dayKey, style: { borderTop: 'none', marginBottom: '8px' } },
                     React.createElement("div", { className: 'date-hdr', onClick: toggleDay, style: { cursor: 'pointer' } },
                         React.createElement("div", { className: 'date-hdr-txt' }, dayKey === 'Tarihsiz' ? 'TARIHSIZ' : new Date(dayKey).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })),
                         React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
@@ -2268,7 +2268,7 @@ function App() {
                     React.createElement("div", { style: { fontSize: 28, marginBottom: 4 } }, '📭'),
                     React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: SB } }, 'Bu aralıkta transfer yok')));
         /* ── Yıllara Göre Gruplar (içinde aylar) ── */
-        const yearSection = React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 14 } },
+        const yearSection = React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 14, marginTop: '20px' } },
             React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: SB, textTransform: 'uppercase', letterSpacing: .6, padding: '4px 2px 0' } }, '📆 Yıllara Göre Tüm Transferler'),
             yearKeys.map(yearKey => {
                 const yearMonthGroups = yearGroups[yearKey] || {};
@@ -2282,14 +2282,14 @@ function App() {
                     yProfit += summaryNetKar(mRowsAll);
                 });
                 const hasYearState = Object.prototype.hasOwnProperty.call(openYears, yearKey);
-                const isYearOpen = hasYearState ? openYears[yearKey] : (yearKey === currentYearKey);
+                const isYearOpen = hasYearState ? openYears[yearKey] : false;
                 const yearLabel = yearKey === 'Tarihsiz' ? 'TARİHSİZ' : yearKey + ' YILI';
-                return React.createElement("div", { key: yearKey, style: { background: '#fff', border: '2px solid ' + BLUE_MID, borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(60,52,38,.08)', marginBottom: '6px' } },
-                    React.createElement("button", { onClick: () => setOpenYears(p => ({ ...p, [yearKey]: !(Object.prototype.hasOwnProperty.call(p, yearKey) ? p[yearKey] : false) })), style: { width: '100%', background: 'linear-gradient(135deg, ' + BLUE_DARK + ', ' + BLUE_MID + ', ' + BLUE_LIGHT + ')', border: 'none', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer', textAlign: 'left' } },
+                return React.createElement("div", { key: yearKey, style: { background: '#fff', border: '1.5px solid #B8CADC', borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(60,52,38,.08)', marginBottom: '6px' } },
+                    React.createElement("button", { onClick: () => setOpenYears(p => ({ ...p, [yearKey]: !(Object.prototype.hasOwnProperty.call(p, yearKey) ? p[yearKey] : false) })), style: { width: '100%', background: 'linear-gradient(135deg, #E8F0F8, #D0E0F0)', border: 'none', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer', textAlign: 'left' } },
                         React.createElement("div", { style: { minWidth: 0 } },
-                            React.createElement("div", { style: { fontSize: 14, fontWeight: 900, color: '#fff' } }, yearLabel),
-                            React.createElement("div", { style: { fontSize: 10, color: 'rgba(255,255,255,.75)', fontWeight: 700 } }, yTotal + ' transfer · ' + yDone + ' tamam · ' + (yProfit >= 0 ? '+' : '') + yProfit.toLocaleString('tr-TR') + '₺')),
-                        React.createElement("div", { style: { fontSize: 16, color: 'rgba(255,255,255,.8)' } }, isYearOpen ? '▾' : '▸')),
+                            React.createElement("div", { style: { fontSize: 14, fontWeight: 900, color: '#1D1C1A' } }, yearLabel),
+                            React.createElement("div", { style: { fontSize: 10, color: '#8C857D', fontWeight: 700 } }, yTotal + ' transfer · ' + yDone + ' tamam · ' + (yProfit >= 0 ? '+' : '') + yProfit.toLocaleString('tr-TR') + '₺')),
+                        React.createElement("div", { style: { fontSize: 16, color: '#8C857D' } }, isYearOpen ? '▾' : '▸')),
                     isYearOpen && React.createElement("div", { style: { padding: '8px 8px 4px', background: '#F6F2EC', display: 'flex', flexDirection: 'column', gap: 10 } },
                         yearMonthKeys.map(monthKey => {
                             const monthDays = yearMonthGroups[monthKey] || {};
