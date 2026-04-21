@@ -2278,7 +2278,7 @@ function App() {
                 const collectedY = yearRows.filter(x => getCollectionState(x) === 'collected').length;
                 const waitingY = yearRows.filter(x => getCollectionState(x) === 'uncollected').length;
                 const hasYState = Object.prototype.hasOwnProperty.call(openYears, yearKey);
-                const isYOpen = hasYState ? openYears[yearKey] : (yearKey === bugun.getFullYear().toString());
+                const isYOpen = hasYState ? openYears[yearKey] : false;
                 const yearTitle = yearKey === 'Tarihsiz' ? 'Tarihsiz' : yearKey;
                 return React.createElement("div", { key: yearKey, style: { background: '#FFFCF8', border: '1px solid ' + BOR, borderRadius: 12, overflow: 'hidden' } },
                     React.createElement("button", { onClick: () => setOpenYears(p => ({ ...p, [yearKey]: !(hasYState ? p[yearKey] : false) })), style: { width: '100%', background: '#F6F2EC', border: 'none', padding: '9px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' } },
