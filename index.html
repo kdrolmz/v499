@@ -487,16 +487,18 @@ function calcBal(t) {
             return { firm, netOl: -Math.max(0, c - d) };
         }
         if (yes) {
-            const v = Math.max(0, c - d);
-            return { firm, netOl: -v };
+            // Müşteri öder ama tam ödemedi → kalan (d - c) firmadan (givenBy) alınacak
+            // Örnek: d=5500, c=3000 → netOl = +2500 (alacak, fatih erden'den)
+            return { firm, netOl: d - c };
         }
         return { firm, netOl: d };
     }
-    if (yes)
-   if (veren && t.paymentToMe)
-        return { firm, netOl: -d };
-    if (yes)
-        return { firm, netOl: c - d };
+    // veren: biz verdik, başka firma yaptı
+    if (yes) {
+        if (t.paymentToMe)
+            return { firm, netOl: -d };
+        return { firm, netOl: d - c };  // kalan agency'den
+    }
     return { firm, netOl: -d };
 }
 function calcAltBal(t) {
