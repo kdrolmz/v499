@@ -339,10 +339,12 @@ const needsVehiclePayment = t => (parseFloat(t && t.driverPayment) || 0) > 0;
 const isVehiclePaid = t => !!(t && t.vehiclePaid);
 const getVehiclePaymentState = t => needsVehiclePayment(t) ? (isVehiclePaid(t) ? 'paid' : 'unpaid') : 'none';
 const normalizeTransfer = t => {
-    const fixed = repairKnownPlate(t);
+    const fixed = repairKnownPlate(t || {});
     const companyCollected = !!(fixed && (fixed.companyCollected || fixed.settled));
     return {
         ...fixed,
+        id: fixed.id || ('tr_' + Date.now() + '_' + Math.random().toString(36).slice(2,8)),
+        updatedAt: fixed.updatedAt || fixed.date || new Date().toISOString(),
         plate: inferPlate(fixed),
         settled: companyCollected,
         companyCollected,
@@ -1421,25 +1423,36 @@ function App() {
                         try{
                             let localPayload = null;
                             try { localPayload = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch(e) {}
+                            const deletedIds = readDeletedTransferIds();
                             if(!snap.exists){
+                                cloudLoadedRef.current = true;
                                 if(localPayload && Array.isArray(localPayload.t) && localPayload.t.length){
-                                    cloudDocRef.set({ payload: localPayload, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), clientUpdatedAt: localPayload.date || new Date().toISOString() }, { merge: true }).catch(function(err){ console.error('Cloud bootstrap save error', err); });
+                                    const bootstrapPayload = mergeSnapshots(localPayload, EMBEDDED_BACKUP || {}, deletedIds);
+                                    cloudWritingRef.current = true;
+                                    cloudDocRef.set({ payload: bootstrapPayload, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), clientUpdatedAt: bootstrapPayload.date || new Date().toISOString() }, { merge: true })
+                                      .catch(function(err){ console.error('Cloud bootstrap save error', err); })
+                                      .finally(function(){ setTimeout(function(){ cloudWritingRef.current = false; }, 300); });
                                 }
                                 return;
                             }
                             const data = snap.data() || {};
                             const payload = data.payload || data;
-                            if(!payload || !Array.isArray(payload.t)) return;
+                            if(!payload || !Array.isArray(payload.t)) { cloudLoadedRef.current = true; return; }
+                            const mergedPayload = mergeSnapshots(payload, localPayload || {}, deletedIds);
                             const localTs = snapshotStamp(localPayload);
                             const cloudTs = snapshotStamp(payload) || snapshotStamp(data);
-                            if(localPayload && Array.isArray(localPayload.t) && localPayload.t.length && localTs > cloudTs){
-                                cloudDocRef.set({ payload: localPayload, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), clientUpdatedAt: localPayload.date || new Date().toISOString() }, { merge: true }).catch(function(err){ console.error('Cloud newer-local save error', err); });
-                                return;
-                            }
+                            const mergedTs = Math.max(localTs, cloudTs, snapshotStamp(mergedPayload));
+                            mergedPayload.v = 26;
+                            mergedPayload.date = mergedPayload.date || new Date(mergedTs || Date.now()).toISOString();
+                            mergedPayload.clientUpdatedAt = new Date(mergedTs || Date.now()).toISOString();
                             cloudLoadedRef.current = true;
                             cloudWritingRef.current = true;
-                            hydrateSnapshot(payload, false);
-                            setTimeout(function(){ cloudWritingRef.current = false; }, 300);
+                            hydrateSnapshot(mergedPayload, false);
+                            const sameText = JSON.stringify((payload && payload.t) || []) === JSON.stringify((mergedPayload && mergedPayload.t) || []);
+                            if(!sameText || localTs > cloudTs){
+                                cloudDocRef.set({ payload: mergedPayload, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), clientUpdatedAt: mergedPayload.clientUpdatedAt }, { merge: true }).catch(function(err){ console.error('Cloud merged save error', err); });
+                            }
+                            setTimeout(function(){ cloudWritingRef.current = false; }, 500);
                         }catch(err){ console.error('Cloud snapshot error', err); }
                     }, function(err){ console.error('Cloud listen error', err); setAuthError('Bulut veriye bağlanılamadı.'); });
                 }
@@ -1472,7 +1485,7 @@ function App() {
                     console.error('[CLOUD] HATA', err);
                     try{ tip('☁ Hata: ' + (err.message || err.code || 'Bilinmeyen')); }catch(e){}
                   });
-            }, 200);
+            }, 500);
         } else if (!authUser) {
             console.warn('[CLOUD] Yazılmadı - oturum yok. Veriler sadece bu cihazda.');
         }
@@ -2172,9 +2185,7 @@ function App() {
                 const isTodayHeader = dayKey === todayKey;
                 
                 // --- DÜZELTİLMİŞ AÇILIR KAPANIR GÜN PANELLERİ ---
-                const dayIsOpen = openDays[dayKey] !== undefined
-                    ? openDays[dayKey]
-                    : (selectedRangeDay ? dayKey === selectedRangeDay : dayKey === todayKey);
+                const dayIsOpen = openDays[dayKey] !== undefined ? openDays[dayKey] : (selectedRangeDay ? dayKey === selectedRangeDay : (dayKey === todayKey));
                 const toggleDay = () => {
                     setOpenDays(p => ({ ...p, [dayKey]: !dayIsOpen }));
                     if (selectedRangeDay === dayKey) setSelectedRangeDay(null);
@@ -2255,15 +2266,7 @@ function App() {
                         const doneCnt = dayTransfers.filter(x => x.status === 'tam').length;
                         const boxBg = isSelected ? 'linear-gradient(135deg,#5A8A6A,#4A7A5A)' : isToday ? 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')' : cnt > 0 ? '#FFFEFA' : INP;
                         const boxBorder = isSelected ? '#16794F' : isToday ? NAV : cnt > 0 ? '#B08D57' : BOR;
-                        return React.createElement("button", { key: dk, onClick: () => {
-                            setSelectedRangeDay(prev => {
-                                const next = prev === dk ? null : dk;
-                                if (next) {
-                                    setOpenDays(p => ({ ...p, [dk]: true }));
-                                }
-                                return next;
-                            });
-                        }, style: { textAlign: 'center', padding: '6px 2px', borderRadius: 10, background: boxBg, border: '1.5px solid ' + boxBorder, cursor: 'pointer', display: 'block', width: '100%' } },
+                        return React.createElement("button", { key: dk, onClick: () => { setSelectedRangeDay(prev => { const next = prev === dk ? null : dk; if (next) { setOpenDays(p => ({ ...p, [dk]: true })); } return next; }); }, style: { textAlign: 'center', padding: '6px 2px', borderRadius: 10, background: boxBg, border: '1.5px solid ' + boxBorder, cursor: 'pointer', display: 'block', width: '100%' } },
                             React.createElement("div", { style: { fontSize: 9, fontWeight: 700, color: (isSelected || isToday) ? 'rgba(255,255,255,.7)' : SB, textTransform: 'capitalize' } }, rd.toLocaleDateString('tr-TR', { weekday: 'short' })),
                             React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: (isSelected || isToday) ? '#fff' : TX, lineHeight: 1.2 } }, rd.getDate()),
                             React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: (isSelected || isToday) ? '#EDD4A0' : cnt > 0 ? G : SB, marginTop: 2 } }, cnt > 0 ? cnt + ' transf.' : '—'));
@@ -2699,6 +2702,8 @@ function App() {
                 React.createElement("div", { style: { display: 'flex', gap: 8, marginBottom: 18 } },
                     React.createElement("button", { onClick: () => cpTxt(activeMsg), style: { flex: 1, background: 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')', color: '#fff', border: 'none', borderRadius: 13, padding: 13, fontWeight: 800, fontSize: '14px', cursor: 'pointer' } }, "\uD83D\uDCCB Kopyala"),
                     ((msgM.tp === 'drv' && msgM.t?.driverPhone) || (msgM.tp === 'cus' && msgM.t?.passengers && msgM.t.passengers[0] && msgM.t.passengers[0].phone)) && (React.createElement("button", { onClick: () => { const raw = msgM.tp === 'drv' ? msgM.t.driverPhone : ((msgM.t.passengers && msgM.t.passengers[0] && msgM.t.passengers[0].phone) || ''); const cl = String(raw || '').replace(/\D/g, ''); const n = cl.startsWith('0') ? '90' + cl.slice(1) : cl.startsWith('90') ? cl : '90' + cl; if (n) window.open('https://wa.me/' + n + '?text=' + encodeURIComponent(activeMsg), '_blank'); }, style: { background: '#16794F', color: '#fff', border: 'none', borderRadius: 13, padding: '13px 16px', fontWeight: 800, fontSize: '13px', cursor: 'pointer' } }, "WA")))))),
+        React.createElement("button", { onClick: () => setBkpM(true), style: { position: 'fixed', left: 12, bottom: 14, zIndex: 45, background: '#FFFCF8', color: TX, border: '1px solid ' + BOR, borderRadius: 18, padding: '8px 10px', fontSize: 11, fontWeight: 800, boxShadow: '0 6px 18px rgba(29,28,26,.14)' } }, '🛡️ Yedek'),
+        React.createElement("div", { style: { position: 'fixed', right: 12, bottom: 14, zIndex: 44, background: authUser ? '#246B3D' : '#A33A3A', color: '#fff', borderRadius: 18, padding: '8px 10px', fontSize: 10, fontWeight: 800, boxShadow: '0 6px 18px rgba(29,28,26,.14)' } }, authUser ? '☁ Senkron açık' : '☁ Offline'),
         bkpM && (React.createElement("div", { className: "mo", onClick: () => setBkpM(false) },
             React.createElement("div", { className: "ms", onClick: e => e.stopPropagation(), style: { paddingBottom: 30 } },
                 React.createElement("div", { style: { width: 40, height: 4, background: BOR, borderRadius: 3, margin: '0 auto 14px' } }),
