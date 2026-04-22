@@ -2172,7 +2172,9 @@ function App() {
                 const isTodayHeader = dayKey === todayKey;
                 
                 // --- DÜZELTİLMİŞ AÇILIR KAPANIR GÜN PANELLERİ ---
-                const dayIsOpen = openDays[dayKey] !== undefined ? openDays[dayKey] : (dayKey === todayKey);
+                const dayIsOpen = openDays[dayKey] !== undefined
+                    ? openDays[dayKey]
+                    : (selectedRangeDay ? dayKey === selectedRangeDay : dayKey === todayKey);
                 const toggleDay = () => {
                     setOpenDays(p => ({ ...p, [dayKey]: !dayIsOpen }));
                     if (selectedRangeDay === dayKey) setSelectedRangeDay(null);
@@ -2188,13 +2190,20 @@ function App() {
                     !isTodayHeader && dayIsOpen && React.createElement("button", {
                         className: 'bugun-inline',
                         onClick: () => {
-                            const todayEl = document.getElementById('day-' + todayKey);
-                            const root = document.getElementById('root');
-                            if (todayEl && root) {
-                                root.scrollTo({ top: todayEl.offsetTop - 130, behavior: 'smooth' });
-                            } else if (root) {
-                                root.scrollTo({ top: 0, behavior: 'smooth' });
-                            }
+                            setSelectedRangeDay(null);
+                            const d = new Date();
+                            d.setHours(0,0,0,0);
+                            setDateRangeStart(d);
+                            setOpenDays(p => ({ ...p, [todayKey]: true }));
+                            setTimeout(() => {
+                                const todayEl = document.getElementById('day-' + todayKey);
+                                const root = document.getElementById('root');
+                                if (todayEl && root) {
+                                    root.scrollTo({ top: todayEl.offsetTop - 130, behavior: 'smooth' });
+                                } else if (root) {
+                                    root.scrollTo({ top: 0, behavior: 'smooth' });
+                                }
+                            }, 50);
                         }
                     }, "📅 Bugüne Dön"),
                     dayIsOpen && React.createElement("div", null, dayRows.map(renderTransferItem)));
@@ -2246,7 +2255,15 @@ function App() {
                         const doneCnt = dayTransfers.filter(x => x.status === 'tam').length;
                         const boxBg = isSelected ? 'linear-gradient(135deg,#5A8A6A,#4A7A5A)' : isToday ? 'linear-gradient(135deg,' + NAV + ',' + NAV2 + ')' : cnt > 0 ? '#FFFEFA' : INP;
                         const boxBorder = isSelected ? '#16794F' : isToday ? NAV : cnt > 0 ? '#B08D57' : BOR;
-                        return React.createElement("button", { key: dk, onClick: () => setSelectedRangeDay(prev => prev === dk ? null : dk), style: { textAlign: 'center', padding: '6px 2px', borderRadius: 10, background: boxBg, border: '1.5px solid ' + boxBorder, cursor: 'pointer', display: 'block', width: '100%' } },
+                        return React.createElement("button", { key: dk, onClick: () => {
+                            setSelectedRangeDay(prev => {
+                                const next = prev === dk ? null : dk;
+                                if (next) {
+                                    setOpenDays(p => ({ ...p, [dk]: true }));
+                                }
+                                return next;
+                            });
+                        }, style: { textAlign: 'center', padding: '6px 2px', borderRadius: 10, background: boxBg, border: '1.5px solid ' + boxBorder, cursor: 'pointer', display: 'block', width: '100%' } },
                             React.createElement("div", { style: { fontSize: 9, fontWeight: 700, color: (isSelected || isToday) ? 'rgba(255,255,255,.7)' : SB, textTransform: 'capitalize' } }, rd.toLocaleDateString('tr-TR', { weekday: 'short' })),
                             React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: (isSelected || isToday) ? '#fff' : TX, lineHeight: 1.2 } }, rd.getDate()),
                             React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: (isSelected || isToday) ? '#EDD4A0' : cnt > 0 ? G : SB, marginTop: 2 } }, cnt > 0 ? cnt + ' transf.' : '—'));
